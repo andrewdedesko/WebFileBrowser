@@ -1,0 +1,87 @@
+@model BrowseDirectoryViewModel
+@{
+    Layout = "_MinimalLayout";
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="text-center">
+    <div class="main-image-container">
+        <img id="image" class="main-image" />
+    </div>
+    <ul>
+        @foreach(var file in Model.Files){
+            <li><a href="@Url.Action("Image", "Browse", new {share = file.Share, path = file.Path})">@file.Name</a></li>
+        }
+    </ul>
+</div>
+
+@section Scripts {
+    <script>
+        const images = @Json.Serialize(Model.Files.Select(f => new{url = Url.Action("Image", "Browse", new {share = f.Share, path = f.Path}), name = f.Name})) ;
+        let currentImage = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if(images.length > 0){
+                setCurrentImage(0);
+            }
+
+            document.addEventListener("keydown", (ev) => {
+                const i = currentImage;
+
+                if(ev.code === "KeyA" || ev.key === "ArrowLeft"){
+                    setCurrentImage(i == 0 ? images.length - 1 : i - 1);
+                    preloadImages([images[i - 2 < 0 ? i - 2 + images.length : i - 2].url]);
+                }else if(ev.code === "KeyD" || ev.key === "ArrowRight"){
+                    setCurrentImage((i + 1) % images.length);
+                    preloadImages([images[(i + 2) % images.length].url]);
+                }
+            });
+        });
+
+        function setCurrentImage(i){
+            if(i >= 0 && i < images.length){
+                document.getElementById("image").src = images[i].url;
+                currentImage = i;
+            }
+        }
+
+        function preloadImages(urls){
+            const promises = urls.map((image) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.src = image;
+                    img.onload = () => resolve(image);
+                    img.onerror = () => reject(new Error(`Failed to load image: ${image}`));
+                });
+            });
+        }
+    </script>
+}
+
+@section Styles {
+    <style>
+        body{
+            background-color: rgb(17, 17, 17);
+        }
+
+        nav {
+            background-color: black;
+            border-bottom-color: black;
+            color: white;
+        }
+
+        .main-image-container {
+            display: flex;
+            height: 90vh;
+            @* max-height: 120vh; *@
+        }
+
+        .main-image {
+            max-inline-size: 100%;
+            block-size: auto;
+            aspect-ratio: 2/1;
+            object-fit: contain;
+
+        }
+    </style>
+}

@@ -1,0 +1,19 @@
+@model BrowseDirectoryViewModel
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="text-center">
+    <p>
+        <a href="@Url.Action("ViewImages", "Browse", new {share = Model.Share, path = Model.Path})">View Images</a>
+    </p>
+    <ul>
+        @foreach(var dir in Model.Directories){
+            <li><a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path})">@dir.Name</a></li>
+        }
+
+        @foreach(var file in Model.Files){
+            <li>@file.Name</li>
+        }
+    </ul>
+</div>
