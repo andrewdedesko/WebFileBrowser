@@ -44,13 +44,16 @@ public class BrowseController : Controller
             .OrderBy(f => f.Name)
             .AsEnumerable();
 
+        var directoryContainsImages = files.Any(f => IsImage(f));
+
         return View(new BrowseDirectoryViewModel()
         {
             Name = Path.GetFileName(dirPath),
             Share = share,
             Path = Path.GetRelativePath(_shareService.GetSharePath(share), dirPath),
             Directories = directoryViewModels,
-            Files = fileViewModels
+            Files = fileViewModels,
+            ShowImageGalleryView = directoryContainsImages
         });
     }
 
@@ -87,6 +90,9 @@ public class BrowseController : Controller
     private bool IsImage(string filename)
     {
         var extension = Path.GetExtension(filename).ToLower();
-        return extension == ".jpg" || extension == ".jpeg";
+        return IsJpgExtension(extension);
     }
+
+    private bool IsJpgExtension(string extension) =>
+        extension == ".jpg" || extension == ".jpeg";
 }
