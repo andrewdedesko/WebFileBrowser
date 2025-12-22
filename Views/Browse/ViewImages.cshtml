@@ -30,10 +30,10 @@
 
                 if(ev.code === "KeyA" || ev.key === "ArrowLeft"){
                     setCurrentImage(i == 0 ? images.length - 1 : i - 1);
-                    preloadImages([images[i - 2 < 0 ? i - 2 + images.length : i - 2].url]);
+                    preloadImagesByIndex(i - 2);
                 }else if(ev.code === "KeyD" || ev.key === "ArrowRight"){
                     setCurrentImage((i + 1) % images.length);
-                    preloadImages([images[(i + 2) % images.length].url]);
+                    preloadImagesByIndex(i + 2);
                 }
             });
         });
@@ -45,7 +45,26 @@
             }
         }
 
-        function preloadImages(urls){
+        function preloadImagesByIndex(...indexes){
+            const totalImages = images.length;
+            const imageUrls = indexes.map(i => {
+                if(i >= totalImages){
+                    return i % totalImages;
+                }else if(i < 0){
+                    while(i < 0){
+                        i += totalImages;
+                    }
+                    return i;
+                }else{
+                    return i;
+                }
+            })
+            .map(i => images[i].url);
+
+            preloadImagesByUrl(imageUrls);
+        }
+
+        function preloadImagesByUrl(urls){
             const promises = urls.map((image) => {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
