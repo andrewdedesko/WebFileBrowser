@@ -23,6 +23,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             if(images.length > 0){
                 setCurrentImage(0);
+                preloadImagesByIndex(1);
             }
 
             document.addEventListener("keydown", (ev) => {
@@ -47,6 +48,7 @@
 
         function preloadImagesByIndex(...indexes){
             const totalImages = images.length;
+
             const imageUrls = indexes.map(i => {
                 if(i >= totalImages){
                     return i % totalImages;
