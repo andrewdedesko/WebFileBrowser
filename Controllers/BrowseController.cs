@@ -98,9 +98,17 @@ public class BrowseController : Controller
 
     private bool IsImage(string filename)
     {
+        if (IsMacDotUnderscoreFile(filename))
+        {
+            return false;
+        }
+
         var extension = Path.GetExtension(filename).ToLower();
         return IsJpgExtension(extension) || IsPngExtension(extension) || IsExtensionWebp(extension) || IsGifExtension(extension);
     }
+
+    private bool IsMacDotUnderscoreFile(string filename) =>
+        Path.GetFileName(filename).StartsWith("._");
 
     private bool IsJpgExtension(string extension) =>
         extension == ".jpg" || extension == ".jpeg";
