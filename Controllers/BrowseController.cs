@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using WebFileBrowser.Models;
 using WebFileBrowser.Services;
 
@@ -83,16 +84,33 @@ public class BrowseController : Controller
     public IActionResult Image(string share, string path)
     {
         var imagePath = Path.Join(_shareService.GetSharePath(share), path);
+        
+        
         var image = System.IO.File.OpenRead(imagePath);
-        return File(image, "image/jpeg");
+        string mimeType;
+        if (!new FileExtensionContentTypeProvider().TryGetContentType(imagePath, out mimeType))
+        {
+            throw new Exception("Unsupported type");
+        }
+
+        return File(image, mimeType);
     }
 
     private bool IsImage(string filename)
     {
         var extension = Path.GetExtension(filename).ToLower();
-        return IsJpgExtension(extension);
+        return IsJpgExtension(extension) || IsPngExtension(extension) || IsExtensionWebp(extension) || IsGifExtension(extension);
     }
 
     private bool IsJpgExtension(string extension) =>
         extension == ".jpg" || extension == ".jpeg";
+
+    private bool IsPngExtension(string extension) =>
+        extension == ".png";
+    
+    private bool IsGifExtension(string extension) =>
+        extension == ".gif";
+    
+    private bool IsExtensionWebp(string extension) =>
+        extension == ".webp";
 }

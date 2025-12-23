@@ -3,20 +3,24 @@
     ViewData["Title"] = Model.Name;
 }
 
-<div class="text-center">
-    @if(Model.ShowImageGalleryView){
-    <p>
-        <a href="@Url.Action("ViewImages", "Browse", new {share = Model.Share, path = Model.Path})">View Images</a>
-    </p>
-    }
-    
-    <ul>
-        @foreach(var dir in Model.Directories){
-            <li><a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path})">@dir.Name</a></li>
+<div class="row">
+    <div class="column">
+        @if(Model.ShowImageGalleryView){
+        <p>
+            <a href="@Url.Action("ViewImages", "Browse", new {share = Model.Share, path = Model.Path})">View Images</a>
+        </p>
         }
 
-        @foreach(var file in Model.Files){
-            <li>@file.Name</li>
-        }
-    </ul>
+        <ul>
+            @foreach(var dir in Model.Directories){
+                <li><a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path})">@dir.Name</a></li>
+            }
+        </ul>
+
+        <ul>
+            @foreach(var file in Model.Files){
+                <li>@file.Name</li>
+            }
+        </ul>
+    </div>
 </div>
