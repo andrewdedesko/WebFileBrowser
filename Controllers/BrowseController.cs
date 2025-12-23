@@ -80,7 +80,8 @@ public class BrowseController : Controller
 
     public IActionResult ViewImages(string share, string path)
     {
-        var images = System.IO.Directory.GetFiles(Path.Join(_shareService.GetSharePath(share), path))
+        var dirPath = Path.Join(_shareService.GetSharePath(share), path);
+        var images = System.IO.Directory.GetFiles(dirPath)
             .Where(f => IsImage(f))
             .Select(f => new FileViewModel()
             {
@@ -95,7 +96,7 @@ public class BrowseController : Controller
         {
             Name = Path.GetFileName(path),
             Share = share,
-            Path = Path.GetRelativePath(_shareService.GetSharePath(share), path),
+            Path = Path.GetRelativePath(_shareService.GetSharePath(share), dirPath),
             Directories = Enumerable.Empty<DirectoryViewModel>(),
             Files = images
         });
