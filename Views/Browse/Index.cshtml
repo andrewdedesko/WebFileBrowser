@@ -5,6 +5,22 @@
 
 <div class="row">
     <div class="column">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                @foreach(var c in Model.PathComponents){
+                    @if(Model.Path != c.Path){
+                        <li class="breadcrumb-item"><a asp-controller="Browse" asp-route-share="@Model.Share" asp-route-path="@c.Path">@c.Name</a></li>
+                    }else{
+                        <li class="breadcrumb-item active">@c.Name</li>
+                    }
+                }
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
         @if(Model.ShowImageGalleryView){
         <p>
             <a href="@Url.Action("ViewImages", "Browse", new {share = Model.Share, path = Model.Path})">View Images</a>

@@ -47,11 +47,31 @@ public class BrowseController : Controller
 
         var directoryContainsImages = files.Any(f => IsImage(f));
 
+        IList<PathViewModel> pathComponents = new List<PathViewModel>();
+        var shareDir = new DirectoryInfo(_shareService.GetSharePath(share));
+        var dir = new DirectoryInfo(dirPath);
+        while(dir != null && dir.FullName != shareDir.FullName)
+        {
+            var p = new PathViewModel()
+            {
+                Name = dir.Name,
+                Path = Path.GetRelativePath(shareDir.FullName, dir.FullName)
+            };
+            pathComponents.Insert(0, p);
+            dir = dir.Parent;
+        }
+        pathComponents.Insert(0, new PathViewModel()
+        {
+            Name = share,
+            Path = null
+        });
+
         return View(new BrowseDirectoryViewModel()
         {
             Name = Path.GetFileName(dirPath),
             Share = share,
             Path = Path.GetRelativePath(_shareService.GetSharePath(share), dirPath),
+            PathComponents = pathComponents,
             Directories = directoryViewModels,
             Files = fileViewModels,
             ShowImageGalleryView = directoryContainsImages
