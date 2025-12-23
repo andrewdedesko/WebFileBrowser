@@ -4,15 +4,31 @@
     ViewData["Title"] = Model.Name;
 }
 
-<div class="text-center">
-    <div class="main-image-container">
-        <img id="image" class="main-image" />
-    </div>
-    <ul>
-        @foreach(var file in Model.Files){
-            <li><a href="@Url.Action("Image", "Browse", new {share = file.Share, path = file.Path})">@file.Name</a></li>
-        }
-    </ul>
+<header>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-black mb-3">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-action="Index" asp-controller="Browse" asp-route-share="@Model.Share" asp-route-path="@Model.Path">@Model.Name</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <a class="nav-link active" aria-current="page" id="button-previous-image" href="#">Previous</a>
+                <span class="navbar-text" id="image-status"></span>
+                <a class="nav-link active" aria-current="page" id="button-next-image" href="#">Next</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div>
+    <main role="main">
+        <div class="text-center">
+            <div class="main-image-container">
+                <img id="image" class="main-image" />
+            </div>
+        </div>
+    </main>
 </div>
 
 @section Scripts {
@@ -27,27 +43,49 @@
             }
 
             document.addEventListener("keydown", (ev) => {
-                const i = currentImage;
-
                 if(ev.code === "KeyA" || ev.key === "ArrowLeft"){
-                    setCurrentImage(i == 0 ? images.length - 1 : i - 1);
-                    preloadImagesByIndex(i - 2);
+                    previousImage();
                 }else if(ev.code === "KeyD" || ev.key === "ArrowRight"){
-                    setCurrentImage((i + 1) % images.length);
-                    preloadImagesByIndex(i + 2);
+                    nextImage();
                 }
             });
+
+            document.getElementById("button-next-image").addEventListener("click", (ev) => {
+                ev.preventDefault();
+                nextImage();
+            });
+
+            document.getElementById("button-previous-image").addEventListener("click", (ev) => {
+                ev.preventDefault();
+                previousImage();
+            });
         });
+
+        function nextImage(){
+            const i = currentImage;
+            setCurrentImage((i + 1) % images.length);
+            preloadImagesByIndex(i + 2);
+        }
+
+        function previousImage(){
+            const i = currentImage;
+            setCurrentImage(i == 0 ? images.length - 1 : i - 1);
+            preloadImagesByIndex(i - 2);
+        }
 
         function setCurrentImage(i){
             if(i >= 0 && i < images.length){
                 document.getElementById("image").src = images[i].url;
+                document.getElementById("image-status").innerText = `${i + 1} of ${images.length}`;
                 currentImage = i;
             }
         }
 
         function preloadImagesByIndex(...indexes){
             const totalImages = images.length;
+            if(totalImages == 0){
+                return;
+            }
 
             const imageUrls = indexes.map(i => {
                 if(i >= totalImages){
@@ -85,11 +123,11 @@
             background-color: rgb(17, 17, 17);
         }
 
-        nav {
+        @* nav {
             background-color: black;
             border-bottom-color: black;
             color: white;
-        }
+        } *@
 
         .main-image-container {
             display: flex;
@@ -103,6 +141,10 @@
             aspect-ratio: 2/1;
             object-fit: contain;
 
+        }
+
+        #image-status{
+            font-family: monospace;
         }
     </style>
 }
