@@ -59,6 +59,18 @@
                 ev.preventDefault();
                 previousImage();
             });
+
+            document.getElementsByClassName("main-image-container")[0].addEventListener("click", (ev) => {
+                ev.preventDefault();
+                const rectangle = ev.target.getBoundingClientRect();
+                const clickX = ev.clientX - rectangle.x;
+                const clickY = ev.clientY - rectangle.y;
+                if(clickX < (rectangle.width / 2)){
+                    previousImage();
+                }else{
+                    nextImage();
+                }
+            });
         });
 
         function nextImage(){
