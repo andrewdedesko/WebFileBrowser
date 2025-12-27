@@ -1,6 +1,9 @@
+using WebFileBrowser.Configuration;
 using WebFileBrowser.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSingleton<ShareMapping>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

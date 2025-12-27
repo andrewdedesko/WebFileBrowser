@@ -1,12 +1,26 @@
+using WebFileBrowser.Configuration;
+
 namespace WebFileBrowser.Services;
 
 public class ShareService : IShareService
 {
+    private readonly ShareMapping _shares;
+
+    public ShareService(ShareMapping shares)
+    {
+        _shares = shares;
+    }
+
+    public IEnumerable<string> GetShareNames()
+    {
+        return _shares.GetShares();
+    }
+
     public string GetSharePath(string shareName)
     {
-        if(shareName == "share")
+        if (_shares.Contains(shareName))
         {
-            return "/mnt/share";
+            return _shares.GetSharePath(shareName);
         }
 
         throw new NotImplementedException($"Unknown share {shareName}");

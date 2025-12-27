@@ -1,0 +1,9 @@
+<div class="row">
+    <div class="column">
+        <ul>
+            @foreach(var dir in Model.Directories){
+                <li><a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path})">@dir.Name</a></li>
+            }
+        </ul>
+    </div>
+</div>

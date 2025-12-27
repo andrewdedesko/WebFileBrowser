@@ -19,6 +19,30 @@ public class BrowseController : Controller
         _shareService = shareService;
     }
 
+    public IActionResult Shares()
+    {
+        var shares = _shareService.GetShareNames();
+        var directoryViewModels = shares
+            .Select(s => new DirectoryViewModel()
+            {
+                Name = s,
+                Share = s
+            })
+            .OrderBy(d => d.Name)
+            .AsEnumerable();
+
+            return View(new BrowseDirectoryViewModel()
+        {
+            Name = "Shares",
+            Share = null,
+            Path = null,
+            PathComponents = Enumerable.Empty<PathViewModel>(),
+            Directories = directoryViewModels,
+            Files = Enumerable.Empty<FileViewModel>(),
+            ShowImageGalleryView = false
+        });
+    }
+
     public IActionResult Index(string share, string path)
     {
         var dirPath = Path.Join(_shareService.GetSharePath(share), path);
