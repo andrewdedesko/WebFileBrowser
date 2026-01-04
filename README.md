@@ -12,5 +12,7 @@ scp webfilebrowser.tar ...
 ssh ...
 
 podman load -i webfilebrowser.tar
+# Or
+podman pull --tls-verify=false localhost:5000/webfilebrowser
 podman run -d -p 8080:8080 -e "Shares__Media=/media" -v /mnt/media:/media webfilebrowser
 ```
