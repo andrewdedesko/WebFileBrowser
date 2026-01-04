@@ -65,6 +65,7 @@ public class BrowseController : Controller
                 Name = Path.GetFileName(f),
                 Share = share,
                 Path = Path.GetRelativePath(_shareService.GetSharePath(share), f),
+                IsImage = IsImage(Path.GetFileName(f)),
                 IsVideo = Path.GetExtension(f).ToLower() == ".mp4"
             })
             .OrderBy(f => f.Name)
@@ -103,7 +104,7 @@ public class BrowseController : Controller
         });
     }
 
-    public IActionResult ViewImages(string share, string path)
+    public IActionResult ViewImages(string share, string path, string image)
     {
         var dirPath = Path.Join(_shareService.GetSharePath(share), path);
         var images = System.IO.Directory.GetFiles(dirPath)
@@ -117,13 +118,18 @@ public class BrowseController : Controller
             .OrderBy(f => f.Name)
             .AsEnumerable();
 
-        return View(new BrowseDirectoryViewModel()
+        string? startingImageName = null;
+        if (!string.IsNullOrEmpty(image))
+        {
+            startingImageName = image;
+        }
+        return View(new ViewImagesViewModel()
         {
             Name = Path.GetFileName(path),
             Share = share,
             Path = Path.GetRelativePath(_shareService.GetSharePath(share), dirPath),
-            Directories = Enumerable.Empty<DirectoryViewModel>(),
-            Files = images
+            Files = images,
+            StartingImageName = startingImageName
         });
     }
 

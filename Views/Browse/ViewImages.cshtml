@@ -1,4 +1,4 @@
-@model BrowseDirectoryViewModel
+@model ViewImagesViewModel
 @{
     Layout = "_MinimalLayout";
     ViewData["Title"] = Model.Name;
@@ -34,11 +34,19 @@
 @section Scripts {
     <script>
         const images = @Json.Serialize(Model.Files.Select(f => new{url = Url.Action("Image", "Browse", new {share = f.Share, path = f.Path}), name = f.Name})) ;
+        const startingImageName = @Json.Serialize(Model.StartingImageName) ;
         let currentImage = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             if(images.length > 0){
-                setCurrentImage(0);
+                let firstImage = 0;
+                if(startingImageName){
+                    const i = images.findIndex(f => f.name == startingImageName);
+                    if(i >= 0){
+                        firstImage = i;
+                    }
+                }
+                setCurrentImage(firstImage);
                 preloadImagesByIndex(1);
             }
 
