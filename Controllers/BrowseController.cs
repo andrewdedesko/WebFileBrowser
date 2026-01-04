@@ -64,7 +64,8 @@ public class BrowseController : Controller
             {
                 Name = Path.GetFileName(f),
                 Share = share,
-                Path = Path.GetRelativePath(_shareService.GetSharePath(share), f)
+                Path = Path.GetRelativePath(_shareService.GetSharePath(share), f),
+                IsVideo = Path.GetExtension(f).ToLower() == ".mp4"
             })
             .OrderBy(f => f.Name)
             .AsEnumerable();
@@ -139,6 +140,26 @@ public class BrowseController : Controller
         }
 
         return File(image, mimeType);
+    }
+
+    public IActionResult ViewVideo(string share, string path)
+    {
+        var viewModel = new ViewVideoViewModel()
+        {
+            Share = share,
+            Path = path,
+            Name = Path.GetFileName(path),
+            VideoMimeType = "video/mp4"
+        };
+
+        return View(viewModel);
+    }
+
+    public IActionResult Video(string share, string path)
+    {
+        var videoPath = Path.Join(_shareService.GetSharePath(share), path);
+        var filestream = System.IO.File.OpenRead(videoPath);
+        return File(filestream, "video/mp4", fileDownloadName: Path.GetFileName(videoPath), enableRangeProcessing: true);
     }
 
     private bool IsImage(string filename)

@@ -35,7 +35,11 @@
 
         <ul>
             @foreach(var file in Model.Files){
-                <li>@file.Name</li>
+                @if(!file.IsVideo){
+                    <li>@file.Name</li>
+                }else{
+                    <li><a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share" asp-route-path="@file.Path">@file.Name</a></li>
+                }
             }
         </ul>
     </div>
