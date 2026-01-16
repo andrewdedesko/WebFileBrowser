@@ -66,7 +66,7 @@ public class BrowseController : Controller
                 Share = share,
                 Path = Path.GetRelativePath(_shareService.GetSharePath(share), f),
                 IsImage = IsImage(Path.GetFileName(f)),
-                IsVideo = Path.GetExtension(f).ToLower() == ".mp4"
+                IsVideo = IsVideo(Path.GetExtension(f).ToLower())
             })
             .OrderBy(f => f.Name)
             .AsEnumerable();
@@ -155,7 +155,7 @@ public class BrowseController : Controller
             Share = share,
             Path = path,
             Name = Path.GetFileName(path),
-            VideoMimeType = "video/mp4"
+            VideoMimeType = GetVideoMimeType(path)
         };
 
         return View(viewModel);
@@ -165,7 +165,7 @@ public class BrowseController : Controller
     {
         var videoPath = Path.Join(_shareService.GetSharePath(share), path);
         var filestream = System.IO.File.OpenRead(videoPath);
-        return File(filestream, "video/mp4", fileDownloadName: Path.GetFileName(videoPath), enableRangeProcessing: true);
+        return File(filestream, GetVideoMimeType(path), fileDownloadName: Path.GetFileName(videoPath), enableRangeProcessing: true);
     }
 
     private bool IsImage(string filename)
@@ -193,4 +193,28 @@ public class BrowseController : Controller
     
     private bool IsExtensionWebp(string extension) =>
         extension == ".webp";
+
+    private bool IsVideo(string extension) => 
+        IsMp4(extension) || IsWebm(extension);
+
+    private bool IsMp4(string extension) =>
+        extension == ".mp4";
+
+    private bool IsWebm(string extension) =>
+        extension == ".webm";
+    
+    private string GetVideoMimeType(string path)
+    {
+        string videoExtension = Path.GetExtension(path).ToLower();
+
+        if (IsMp4(videoExtension))
+        {
+            return "video/mp4";
+        } else if (IsWebm(videoExtension))
+        {
+            return "video/webm";
+        }
+
+        throw new Exception("Unsupported video extension");
+    }
 }
