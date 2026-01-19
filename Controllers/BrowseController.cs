@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using WebFileBrowser.Models;
@@ -5,6 +6,7 @@ using WebFileBrowser.Services;
 
 namespace WebFileBrowser.Controllers;
 
+[Authorize]
 public class BrowseController : Controller
 {
     private readonly IShareService _shareService;
