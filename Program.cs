@@ -10,8 +10,9 @@ builder.Services.AddSingleton<UserCredentials>();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddSingleton<IShareService, ShareService>();
 builder.Services.AddSingleton<IUserAuthenticationService, UserAuthenticationService>();
+builder.Services.AddSingleton<IShareService, ShareService>();
+builder.Services.AddSingleton<IBrowseService, BrowseService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

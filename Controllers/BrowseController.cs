@@ -10,15 +10,17 @@ namespace WebFileBrowser.Controllers;
 public class BrowseController : Controller
 {
     private readonly IShareService _shareService;
+    private readonly IBrowseService _browseService;
 
     private readonly IEnumerable<string> _imageExtensions = new List<string>()
     {
         "jpg", "jpeg", "png", "webp", "gif"
     };
 
-    public BrowseController(IShareService shareService)
+    public BrowseController(IShareService shareService, IBrowseService browseService)
     {
         _shareService = shareService;
+        _browseService = browseService;
     }
 
     public IActionResult Shares()
@@ -47,26 +49,25 @@ public class BrowseController : Controller
 
     public IActionResult Index(string share, string path)
     {
-        var dirPath = Path.Join(_shareService.GetSharePath(share), path);
-        var directories = System.IO.Directory.GetDirectories(dirPath);
+        var directories = _browseService.GetDirectories(share, path);
 
         var directoryViewModels = directories
             .Select(d => new DirectoryViewModel()
             {
                 Name = Path.GetFileName(d),
                 Share = share,
-                Path = Path.GetRelativePath(_shareService.GetSharePath(share), d)
+                Path = d
             })
             .OrderBy(d => d.Name)
             .AsEnumerable();
 
-        var files = System.IO.Directory.GetFiles(dirPath);
+        var files = _browseService.GetFiles(share, path);
         var fileViewModels = files
             .Select(f => new FileViewModel()
             {
                 Name = Path.GetFileName(f),
                 Share = share,
-                Path = Path.GetRelativePath(_shareService.GetSharePath(share), f),
+                Path = f,
                 IsImage = IsImage(Path.GetFileName(f)),
                 IsVideo = IsVideo(Path.GetExtension(f).ToLower())
             })
@@ -77,6 +78,7 @@ public class BrowseController : Controller
 
         IList<PathViewModel> pathComponents = new List<PathViewModel>();
         var shareDir = new DirectoryInfo(_shareService.GetSharePath(share));
+        var dirPath = Path.Join(_shareService.GetSharePath(share), path);
         var dir = new DirectoryInfo(dirPath);
         while(dir != null && dir.FullName != shareDir.FullName)
         {
@@ -108,14 +110,13 @@ public class BrowseController : Controller
 
     public IActionResult ViewImages(string share, string path, string image)
     {
-        var dirPath = Path.Join(_shareService.GetSharePath(share), path);
-        var images = System.IO.Directory.GetFiles(dirPath)
+        var images = _browseService.GetFiles(share, path)
             .Where(f => IsImage(f))
             .Select(f => new FileViewModel()
             {
                 Name = Path.GetFileName(f),
                 Share = share,
-                Path = Path.GetRelativePath(_shareService.GetSharePath(share), f)
+                Path = f
             })
             .OrderBy(f => f.Name)
             .AsEnumerable();
@@ -129,7 +130,7 @@ public class BrowseController : Controller
         {
             Name = Path.GetFileName(path),
             Share = share,
-            Path = Path.GetRelativePath(_shareService.GetSharePath(share), dirPath),
+            Path = path,
             Files = images,
             StartingImageName = startingImageName
         });
