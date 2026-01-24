@@ -1,0 +1,64 @@
+@model BrowseDirectoryViewModel
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="row">
+    <div class="column">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                @foreach(var c in Model.PathComponents){
+                    @if(Model.Path != c.Path){
+                        <li class="breadcrumb-item"><a asp-controller="Browse" asp-route-share="@Model.Share" asp-route-path="@c.Path">@c.Name</a></li>
+                    }else{
+                        <li class="breadcrumb-item active">@c.Name</li>
+                    }
+                }
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
+        <div class="content-container">
+            @foreach(var dir in Model.Directories){
+                <div class="item">
+                    <a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path})">
+                    <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path})" class="card-img-top" style="max-width: 240px; max-height: 240px; object-fit: contain;">
+                    <div class="card-body">
+                        <h5 class="card-title">@dir.Name</h5>
+                    </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles{
+    <style>
+        .content-container{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+
+            margin-left: -5px;
+        }
+
+        .content-container .item{
+            padding: 10px;
+            margin: 5px;
+            flex: 1;
+            flex-basis: 20%;
+            text-align: center;
+
+            background-color: #15181a;
+        }
+
+        .content-container .item img{
+            image-orientation: none;
+            margin-bottom: 10px;
+        }
+    </style>
+} 

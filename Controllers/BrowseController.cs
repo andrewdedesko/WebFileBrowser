@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using WebFileBrowser.Models;
 using WebFileBrowser.Services;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+
 
 namespace WebFileBrowser.Controllers;
 
@@ -47,7 +50,7 @@ public class BrowseController : Controller
         });
     }
 
-    public IActionResult Index(string share, string path)
+    public IActionResult Index(string share, string path, bool preview = false)
     {
         var directories = _browseService.GetDirectories(share, path);
 
@@ -96,7 +99,12 @@ public class BrowseController : Controller
             Path = null
         });
 
-        return View(new BrowseDirectoryViewModel()
+        var viewName = "Index";
+        if (preview)
+        {
+            viewName = "PreviewIndex";
+        }
+        return View(viewName, new BrowseDirectoryViewModel()
         {
             Name = Path.GetFileName(dirPath),
             Share = share,
@@ -169,6 +177,68 @@ public class BrowseController : Controller
         var videoPath = Path.Join(_shareService.GetSharePath(share), path);
         var filestream = System.IO.File.OpenRead(videoPath);
         return File(filestream, GetVideoMimeType(path), fileDownloadName: Path.GetFileName(videoPath), enableRangeProcessing: true);
+    }
+
+    public IActionResult Thumbnail(string share, string path)
+    {
+        string? thumbnailFilePath = null;
+        var attr = System.IO.File.GetAttributes(Path.Join(_shareService.GetSharePath(share), path));
+        if (true || attr.HasFlag(FileAttributes.Directory))
+        {
+            var dirs = new Queue<string>();
+            dirs.Enqueue(Path.Join(_shareService.GetSharePath(share), path));
+
+            while(thumbnailFilePath == null && dirs.Count > 0){
+                var currPath = dirs.Dequeue();
+                var imageFiles = Directory.GetFiles(currPath)
+                .Where(f => IsImage(Path.GetFileName(f)))
+                .ToArray();
+
+                if(imageFiles.Any()){
+                    thumbnailFilePath = imageFiles[imageFiles.Length / 2];
+                }
+                else
+                {
+                    var subDirs = Directory.GetDirectories(currPath);
+                    foreach(var d in subDirs)
+                    {
+                        dirs.Enqueue(d);
+                    }
+                }
+            }
+        }
+        else
+        {
+            thumbnailFilePath = Path.Join(_shareService.GetSharePath(share), path);
+        }
+
+        if(thumbnailFilePath == null)
+        {
+            return NotFound();
+        }
+
+        using(var image = SixLabors.ImageSharp.Image.Load(thumbnailFilePath))
+        {
+            var width = 0;
+            var height = 0;
+
+            if(image.Width > image.Height)
+            {
+                width = 240;
+            }
+            else
+            {
+                height = 240;
+            }
+            image.Mutate(x => x.Resize(width, height));
+
+            var thumbnailImageStream = new MemoryStream();
+            var writer = new StreamWriter(thumbnailImageStream);
+            image.SaveAsJpeg(thumbnailImageStream);
+
+            var stream = new MemoryStream(thumbnailImageStream.ToArray());
+            return File(stream, "image/jpeg");
+        }
     }
 
     private bool IsImage(string filename)
