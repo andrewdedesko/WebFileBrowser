@@ -14,6 +14,13 @@ builder.Services.AddSingleton<IUserAuthenticationService, UserAuthenticationServ
 builder.Services.AddSingleton<IShareService, ShareService>();
 builder.Services.AddSingleton<IBrowseService, BrowseService>();
 
+// builder.Services.AddDistributedMemoryCache();
+builder.Services.AddStackExchangeRedisCache(options =>
+ {
+     options.Configuration = builder.Configuration.GetConnectionString("RedisCache");
+     options.InstanceName = "WebFileViewerCache";
+ });
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -21,6 +28,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
         options.AccessDeniedPath = "/Forbidden/";
     });
+
+builder.Services.AddControllers(options =>
+{
+    options.CacheProfiles.Add("Media", new Microsoft.AspNetCore.Mvc.CacheProfile()
+    {
+        Duration = 4800
+    });
+});
 
 var app = builder.Build();
 

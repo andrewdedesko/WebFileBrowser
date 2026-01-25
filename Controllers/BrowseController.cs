@@ -5,6 +5,7 @@ using WebFileBrowser.Models;
 using WebFileBrowser.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using Microsoft.Extensions.Caching.Distributed;
 
 
 namespace WebFileBrowser.Controllers;
@@ -14,16 +15,18 @@ public class BrowseController : Controller
 {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
+    private readonly IDistributedCache _cache;
 
     private readonly IEnumerable<string> _imageExtensions = new List<string>()
     {
         "jpg", "jpeg", "png", "webp", "gif"
     };
 
-    public BrowseController(IShareService shareService, IBrowseService browseService)
+    public BrowseController(IShareService shareService, IBrowseService browseService, IDistributedCache cache)
     {
         _shareService = shareService;
         _browseService = browseService;
+        _cache = cache;
     }
 
     public IActionResult Shares()
@@ -179,8 +182,16 @@ public class BrowseController : Controller
         return File(filestream, GetVideoMimeType(path), fileDownloadName: Path.GetFileName(videoPath), enableRangeProcessing: true);
     }
 
+    [ResponseCache(CacheProfileName = "Media")]
     public IActionResult Thumbnail(string share, string path)
     {
+        var cacheKey = $"Thumbnail:Image:${Path.Join(_shareService.GetSharePath(share), path)}";
+        var cachedThumbnail = _cache.Get(cacheKey);
+        if(cachedThumbnail != null)
+        {
+            return File(cachedThumbnail, "image/jpeg");
+        }
+
         string? thumbnailFilePath = null;
         var attr = System.IO.File.GetAttributes(Path.Join(_shareService.GetSharePath(share), path));
         if (true || attr.HasFlag(FileAttributes.Directory))
@@ -236,8 +247,9 @@ public class BrowseController : Controller
             var writer = new StreamWriter(thumbnailImageStream);
             image.SaveAsJpeg(thumbnailImageStream);
 
-            var stream = new MemoryStream(thumbnailImageStream.ToArray());
-            return File(stream, "image/jpeg");
+            var thumbnailData = thumbnailImageStream.ToArray();
+            _cache.Set(cacheKey, thumbnailData);
+            return File(thumbnailData, "image/jpeg");
         }
     }
 
