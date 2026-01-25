@@ -5,6 +5,7 @@ class DirectoryViewModel
     public string Name {get; set;}
     public string Share {get; set;}
     public string Path {get; set;}
+    public string? ViewType {get; set;}
 }
 
 class FileViewModel

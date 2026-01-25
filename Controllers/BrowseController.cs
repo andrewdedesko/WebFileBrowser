@@ -6,6 +6,7 @@ using WebFileBrowser.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Text.RegularExpressions;
 
 
 namespace WebFileBrowser.Controllers;
@@ -53,7 +54,7 @@ public class BrowseController : Controller
         });
     }
 
-    public IActionResult Index(string share, string path, bool preview = false)
+    public IActionResult Index(string share, string path, string? view)
     {
         var directories = _browseService.GetDirectories(share, path);
 
@@ -62,7 +63,8 @@ public class BrowseController : Controller
             {
                 Name = Path.GetFileName(d),
                 Share = share,
-                Path = d
+                Path = d,
+                ViewType = view
             })
             .OrderBy(d => d.Name)
             .AsEnumerable();
@@ -103,8 +105,16 @@ public class BrowseController : Controller
         });
 
         var viewName = "Index";
-        if (preview)
-        {
+        if (string.IsNullOrEmpty(view)) {
+            if(share == "Andrew" && !string.IsNullOrEmpty(path) && directoryViewModels.Any()){
+                var r = new Regex("^Stuff\\/Sites\\/[a-z0-9-_.]+(\\/[a\\a-z0-9-_.]+)?$");
+                var m = r.Match(path);
+                if (m.Success)
+                {
+                    viewName = "PreviewIndex";
+                }
+            }
+        } else if (view?.ToLower() == "thumbnails" && directoryViewModels.Any()) {
             viewName = "PreviewIndex";
         }
         return View(viewName, new BrowseDirectoryViewModel()
