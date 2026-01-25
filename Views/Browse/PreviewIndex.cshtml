@@ -25,7 +25,7 @@
             @foreach(var dir in Model.Directories){
                 <div class="item">
                     <a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path, view = dir.ViewType})">
-                    <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path})" class="card-img-top" style="max-width: 240px; max-height: 240px; object-fit: contain;">
+                    <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path})" loading="lazy" class="card-img-top" style="max-width: 240px; max-height: 240px; object-fit: contain;">
                     <div class="card-body">
                         <h5 class="card-title">@dir.Name</h5>
                     </div>
