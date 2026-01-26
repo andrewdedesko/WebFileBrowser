@@ -7,6 +7,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.RegularExpressions;
+using WebFileBrowser.Configuration;
 
 
 namespace WebFileBrowser.Controllers;
@@ -16,6 +17,7 @@ public class BrowseController : Controller
 {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
+    private readonly DefaultViews _defaultViews;
     private readonly IDistributedCache _cache;
 
     private readonly IEnumerable<string> _imageExtensions = new List<string>()
@@ -23,10 +25,11 @@ public class BrowseController : Controller
         "jpg", "jpeg", "png", "webp", "gif"
     };
 
-    public BrowseController(IShareService shareService, IBrowseService browseService, IDistributedCache cache)
+    public BrowseController(IShareService shareService, IBrowseService browseService, DefaultViews defaultViews, IDistributedCache cache)
     {
         _shareService = shareService;
         _browseService = browseService;
+        _defaultViews = defaultViews;
         _cache = cache;
     }
 
@@ -106,11 +109,8 @@ public class BrowseController : Controller
 
         var viewName = "Index";
         if (string.IsNullOrEmpty(view)) {
-            if(share == "Andrew" && !string.IsNullOrEmpty(path) && directoryViewModels.Any()){
-                var r = new Regex("^Stuff\\/Sites\\/[a-z0-9-_. ]+(\\/[a\\a-z0-9-_. ]+)?$", RegexOptions.IgnoreCase);
-                var m = r.Match(path);
-                if (m.Success)
-                {
+            if(!string.IsNullOrEmpty(path) && directoryViewModels.Any()){
+                if (PathMatchesThumbnailViewPatterns(path)){
                     viewName = "PreviewIndex";
                 }
             }
@@ -311,5 +311,23 @@ public class BrowseController : Controller
         }
 
         throw new Exception("Unsupported video extension");
+    }
+
+    private bool PathMatchesThumbnailViewPatterns(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return false;
+        }
+
+        foreach(var p in _defaultViews.ThumbnailViewPathPatterns)
+        {
+            if (p.Match(path).Success)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<ShareMapping>();
 builder.Services.AddSingleton<UserCredentials>();
+builder.Services.AddSingleton<DefaultViews>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
