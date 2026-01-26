@@ -21,12 +21,6 @@
 
 <div class="row" style="margin-bottom: 20px;">
     <div class="column">
-        @if (Model.ShowImageGalleryView)
-        {
-            <a href="@Url.Action("ViewImages", "Browse", new { share = Model.Share, path = Model.Path })"
-                class="btn btn-sm btn-primary" role="button">View Images</a>
-        }
-
         <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
             @if (Model.ViewType == "List")
             {
@@ -48,6 +42,12 @@
                     href="@Url.Action("Index", "Browse", new { share = Model.Share, path = Model.Path, view = "Thumbnails" })">Thumbnails</a>
             }
         </div>
+
+        @if (Model.ShowImageGalleryView)
+        {
+            <a href="@Url.Action("ViewImages", "Browse", new { share = Model.Share, path = Model.Path })"
+                class="btn btn-sm btn-primary" role="button">View Images</a>
+        }
     </div>
 </div>
 
