@@ -107,7 +107,7 @@ public class BrowseController : Controller
         var viewName = "Index";
         if (string.IsNullOrEmpty(view)) {
             if(share == "Andrew" && !string.IsNullOrEmpty(path) && directoryViewModels.Any()){
-                var r = new Regex("^Stuff\\/Sites\\/[a-z0-9-_.]+(\\/[a\\a-z0-9-_.]+)?$");
+                var r = new Regex("^Stuff\\/Sites\\/[a-z0-9-_. ]+(\\/[a\\a-z0-9-_. ]+)?$", RegexOptions.IgnoreCase);
                 var m = r.Match(path);
                 if (m.Success)
                 {
