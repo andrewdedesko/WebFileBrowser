@@ -32,5 +32,6 @@ class BrowseDirectoryViewModel
     public IEnumerable<DirectoryViewModel> Directories {get; set;}
     public IEnumerable<FileViewModel> Files {get; set;}
 
+    public string ViewType {get; set;}
     public bool ShowImageGalleryView {get; set;}
 }

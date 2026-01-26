@@ -125,6 +125,7 @@ public class BrowseController : Controller
             PathComponents = pathComponents,
             Directories = directoryViewModels,
             Files = fileViewModels,
+            ViewType = viewName == "PreviewIndex" ? "Thumbnails" : "List",
             ShowImageGalleryView = directoryContainsImages
         });
     }

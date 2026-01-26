@@ -19,6 +19,33 @@
     </div>
 </div>
 
+<div class="row" style="margin-bottom: 20px;">
+    <div class="column">
+        @if (Model.ShowImageGalleryView)
+        {
+            <a href="@Url.Action("ViewImages", "Browse", new { share = Model.Share, path = Model.Path })"
+                class="btn btn-sm btn-primary" role="button">View Images</a>
+        }
+
+        <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+            @if(Model.ViewType == "List"){
+                <a role="buttpn"
+                    class="btn btn-sm btn-success" href="#" onclick="return false;">List</a>
+            }else{
+                <a role="button" class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", "Browse", new{share = Model.Share, path = Model.Path, view = "List"})">List</a>
+            }
+            
+            @if(Model.ViewType == "Thumbnails"){
+                <a role="button" class="btn btn-sm btn-success"
+                    href="#" onclick="return false;">Thumbnails</a>
+            }else{
+                <a role="button" class="btn btn-sm btn-outline-secondary"
+                    href="@Url.Action("Index", "Browse", new { share = Model.Share, path = Model.Path, view = "Thumbnails" })">Thumbnails</a>
+            }
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="column">
         <div class="content-container">
@@ -33,6 +60,33 @@
                 </div>
             }
         </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
+        @if (Model.Files.Any())
+        {
+            <ul>
+                @foreach (var file in Model.Files)
+                {
+                    @if (file.IsImage)
+                    {
+                        <li><a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share"
+                                asp-route-path="@Model.Path" asp-route-image="@file.Name">@file.Name</a></li>
+                    }
+                    else if (file.IsVideo)
+                    {
+                        <li><a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
+                                asp-route-path="@file.Path">@file.Name</a></li>
+                    }
+                    else
+                    {
+                        <li>@file.Name</li>
+                    }
+                }
+            </ul>
+        }
     </div>
 </div>
 
