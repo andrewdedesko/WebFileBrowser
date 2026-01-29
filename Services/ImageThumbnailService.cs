@@ -27,6 +27,7 @@ public class ImageThumbnailService : IImageThumbnailService {
             return cachedThumbnail;
         }
 
+        DistributedCacheEntryOptions cacheEntryOptions = new();
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
@@ -36,6 +37,7 @@ public class ImageThumbnailService : IImageThumbnailService {
             // GetThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
         }else if(File.Exists(filePath) && IsImage(filePath)) {
             data = GetImageFileThumbnailImage(share, path);
+            cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromHours(1));
         }
 
 
@@ -43,7 +45,7 @@ public class ImageThumbnailService : IImageThumbnailService {
             throw new Exception($"Could not get a thumbnail for share: {share}, path: {path}");
         }
 
-        _cache.Set(cacheKey, data);
+        _cache.Set(cacheKey, data, cacheEntryOptions);
         return data;
     }
 
