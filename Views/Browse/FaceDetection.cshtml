@@ -1,0 +1,31 @@
+@model GalleryFaceDetectionResultViewModel
+@{
+    ViewData["Title"] = "Face Detection";
+}
+
+<div class="row">
+    <div class="column">
+        <h1>Face Detection Results</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
+        @foreach(var image in Model.Images){
+            <div class="image-result">
+                <img src="@Url.Action("Image", "Browse", new { share = image.Share, path = image.Path })" />
+                <span>@image.Filename</span> <span>Faces detected: </span><strong>@image.FaceCount</strong>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles{
+    <style>
+        .image-result img{
+            width: 300px;
+            height: 300px;
+            object-fit: contain;
+        }
+    </style>
+}

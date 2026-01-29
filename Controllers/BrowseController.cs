@@ -8,6 +8,8 @@ using SixLabors.ImageSharp.Processing;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.RegularExpressions;
 using WebFileBrowser.Configuration;
+using FaceAiSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 
 namespace WebFileBrowser.Controllers;
@@ -17,6 +19,7 @@ public class BrowseController : Controller
 {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
+    private readonly IImageThumbnailService _imageThumbnailService;
     private readonly DefaultViews _defaultViews;
     private readonly IDistributedCache _cache;
 
@@ -25,11 +28,12 @@ public class BrowseController : Controller
         "jpg", "jpeg", "png", "webp", "gif"
     };
 
-    public BrowseController(IShareService shareService, IBrowseService browseService, DefaultViews defaultViews, IDistributedCache cache)
+    public BrowseController(IShareService shareService, IBrowseService browseService, DefaultViews defaultViews, IImageThumbnailService imageThumbnailService, IDistributedCache cache)
     {
         _shareService = shareService;
         _browseService = browseService;
         _defaultViews = defaultViews;
+        _imageThumbnailService = imageThumbnailService;
         _cache = cache;
     }
 
@@ -109,12 +113,12 @@ public class BrowseController : Controller
 
         var viewName = "Index";
         if (string.IsNullOrEmpty(view)) {
-            if(!string.IsNullOrEmpty(path) && directoryViewModels.Any()){
+            if(!string.IsNullOrEmpty(path)){
                 if (PathMatchesThumbnailViewPatterns(path)){
                     viewName = "PreviewIndex";
                 }
             }
-        } else if (view?.ToLower() == "thumbnails" && directoryViewModels.Any()) {
+        } else if (view?.ToLower() == "thumbnails") {
             viewName = "PreviewIndex";
         }
         return View(viewName, new BrowseDirectoryViewModel()
@@ -127,6 +131,37 @@ public class BrowseController : Controller
             Files = fileViewModels,
             ViewType = viewName == "PreviewIndex" ? "Thumbnails" : "List",
             ShowImageGalleryView = directoryContainsImages
+        });
+    }
+
+    public IActionResult FaceDetection(string share, string path)
+    {
+        var det = FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
+        var imagePaths = _browseService.GetFiles(share, path)
+            .Where(IsImage)
+            .OrderBy(p => Path.GetFileName(p))
+            .AsEnumerable();
+        var sharePath = _shareService.GetSharePath(share);
+
+        var images = new List<ImageFaceDetectionResult>();
+        
+        foreach(var p in imagePaths)
+        {
+            var image = SixLabors.ImageSharp.Image.Load<Rgb24>(Path.Join(sharePath, p));
+            var faceCount = det.CountFaces(image);
+
+            images.Add(new ImageFaceDetectionResult()
+            {
+                Share = share,
+                Path = p,
+                Filename = Path.GetFileName(p),
+                FaceCount = faceCount
+            });
+        }
+
+        return View(new GalleryFaceDetectionResultViewModel()
+        {
+            Images = images.AsEnumerable()
         });
     }
 
@@ -196,72 +231,25 @@ public class BrowseController : Controller
     [ResponseCache(CacheProfileName = "Media")]
     public IActionResult Thumbnail(string share, string path)
     {
-        var cacheKey = $"Thumbnail:Image:${Path.Join(_shareService.GetSharePath(share), path)}";
-        var cachedThumbnail = _cache.Get(cacheKey);
-        if(cachedThumbnail != null)
+        var thumbnail = _imageThumbnailService.GetImageThumbnail(share, path);
+        return File(thumbnail, "image/jpeg");
+    }
+
+    [HttpGet]
+    public IActionResult ExplainThumbnail(string share, string path)
+    {
+        var thumbnailCandidates = _imageThumbnailService.GetImageThumbnailCandidates(share, path);
+        var selectedCandidate = _imageThumbnailService.PickThumbnailCandidate(thumbnailCandidates);
+        selectedCandidate.TopPick = true;
+
+        thumbnailCandidates.Candidates = thumbnailCandidates.Candidates
+            .OrderByDescending(c => c.TopPick)
+            .AsEnumerable();
+
+        return View(new ExplainThumbnailViewModel()
         {
-            return File(cachedThumbnail, "image/jpeg");
-        }
-
-        string? thumbnailFilePath = null;
-        var attr = System.IO.File.GetAttributes(Path.Join(_shareService.GetSharePath(share), path));
-        if (true || attr.HasFlag(FileAttributes.Directory))
-        {
-            var dirs = new Queue<string>();
-            dirs.Enqueue(Path.Join(_shareService.GetSharePath(share), path));
-
-            while(thumbnailFilePath == null && dirs.Count > 0){
-                var currPath = dirs.Dequeue();
-                var imageFiles = Directory.GetFiles(currPath)
-                .Where(f => IsImage(Path.GetFileName(f)))
-                .ToArray();
-
-                if(imageFiles.Any()){
-                    thumbnailFilePath = imageFiles[imageFiles.Length / 2];
-                }
-                else
-                {
-                    var subDirs = Directory.GetDirectories(currPath);
-                    foreach(var d in subDirs)
-                    {
-                        dirs.Enqueue(d);
-                    }
-                }
-            }
-        }
-        else
-        {
-            thumbnailFilePath = Path.Join(_shareService.GetSharePath(share), path);
-        }
-
-        if(thumbnailFilePath == null)
-        {
-            return NotFound();
-        }
-
-        using(var image = SixLabors.ImageSharp.Image.Load(thumbnailFilePath))
-        {
-            var width = 0;
-            var height = 0;
-
-            if(image.Width > image.Height)
-            {
-                width = 240;
-            }
-            else
-            {
-                height = 240;
-            }
-            image.Mutate(x => x.Resize(width, height));
-
-            var thumbnailImageStream = new MemoryStream();
-            var writer = new StreamWriter(thumbnailImageStream);
-            image.SaveAsJpeg(thumbnailImageStream);
-
-            var thumbnailData = thumbnailImageStream.ToArray();
-            _cache.Set(cacheKey, thumbnailData);
-            return File(thumbnailData, "image/jpeg");
-        }
+            ImageThumbnailCandidateSet = thumbnailCandidates
+        });
     }
 
     private bool IsImage(string filename)

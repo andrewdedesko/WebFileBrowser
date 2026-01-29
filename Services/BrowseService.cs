@@ -30,18 +30,5 @@ class BrowseService : IBrowseService
             .AsEnumerable();
     }
 
-    private string GetPath(string share, string path)
-    {
-        var sharePath = _shareService.GetSharePath(share);
-        if (string.IsNullOrEmpty(path)) {
-            return sharePath;
-        }
-
-        var absolutePath = Path.GetFullPath(Path.Combine(sharePath, path));
-        if (!absolutePath.StartsWith(sharePath)) {
-            throw new Exception("Invalid path");
-        }
-
-        return absolutePath;
-    }
+    private string GetPath(string share, string path) => _shareService.GetPath(share, path);
 }

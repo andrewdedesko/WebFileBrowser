@@ -65,28 +65,39 @@
 
 <div class="row">
     <div class="column">
-        @if (Model.Files.Any())
-        {
-            <ul>
-                @foreach (var file in Model.Files)
-                {
+        <div class="content-container">
+            @foreach (var file in Model.Files)
+            {
+                <div class="item">
                     @if (file.IsImage)
                     {
-                        <li><a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share"
-                                asp-route-path="@Model.Path" asp-route-image="@file.Name">@file.Name</a></li>
+                        <a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share"
+                                asp-route-path="@Model.Path" asp-route-image="@file.Name">
+                            <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
+                                loading="lazy">
+                            <div class="card-body">
+                                <h5 class="card-title">@file.Name</h5>
+                            </div>
+                        </a>
                     }
                     else if (file.IsVideo)
                     {
-                        <li><a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
-                                asp-route-path="@file.Path">@file.Name</a></li>
+                        <a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
+                                asp-route-path="@file.Path">
+                                <div class="card-body">
+                                <h5 class="card-title">@file.Name</h5>
+                            </div>
+                        </a>
                     }
                     else
                     {
-                        <li>@file.Name</li>
+                        <div class="card-body">
+                            <h5 class="card-title">@file.Name</h5>
+                        </div>
                     }
-                }
-            </ul>
-        }
+                </div>
+            }
+        </div>
     </div>
 </div>
 

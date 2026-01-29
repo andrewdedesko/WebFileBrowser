@@ -1,0 +1,80 @@
+@model ExplainThumbnailViewModel
+@{
+    ViewData["Title"] = "Explain Thumbnail";
+}
+
+<div class="row">
+    <div class="column">
+        <h1>Explain Thumbnail</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
+        <dl>
+            <dt>Total Candidates:</dt>
+            <dd>@Model.ImageThumbnailCandidateSet.Candidates.Count()</dd>
+
+            <dt>Confidence Threshold:</dt>
+            <dd>@Model.ImageThumbnailCandidateSet.ConfidenceThreshold</dd>
+
+            <dt>Lower Face Area Threshold:</dt>
+            <dd>@Model.ImageThumbnailCandidateSet.LowerFaceAreaThreshold</dd>
+
+            <dt>Upper Face Area Threshold:</dt>
+            <dd>@Model.ImageThumbnailCandidateSet.UpperFaceAreaThreshold</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
+        @foreach (var candidate in Model.ImageThumbnailCandidateSet.Candidates)
+        {
+            <div class="image-result @(candidate.TopPick ? "picked" : null)">
+                <img src="@Url.Action("Image", "Browse", new { share = candidate.Share, path = candidate.Path })" />
+                <dl>
+                    <dt>File</dt>
+                    <dd>@candidate.Filename</dd>
+
+                    <dt>File System Order:</dt>
+                    <dd>@candidate.FileSystemOrder</dd>
+
+                    <dt>Faces Detected:</dt>
+                    <dl>@candidate.FaceCount</dl>
+
+                    <dt>Avg. Face Detection Confidence:</dt>
+                    <dl>@candidate.Confidence</dl>
+
+                    <dt>Face Area:</dt>
+                    <dl>@((candidate.FaceAreaPercentage * 100).ToString("0.##"))%</dl>
+
+                    <dt>Eyes:</dt>
+                    <dl>Open: @candidate.OpenEyesCount, Closed: @candidate.ClosedEyesCount</dl>
+
+                    <dt>Open Eye Percentage:</dt>
+                    <dl>@((candidate.OpenEyesPercentage * 100).ToString())%</dl>
+                </dl>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles{
+    <style>
+        .image-result{
+            margin-bottom: 25px;
+            display: flex;
+        }
+
+        .picked{
+            background-color: mediumseagreen;
+        }
+
+        .image-result img{
+            width: 300px;
+            height: 300px;
+            object-fit: contain;
+        }
+    </style>
+}

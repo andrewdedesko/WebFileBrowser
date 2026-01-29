@@ -25,4 +25,18 @@ public class ShareService : IShareService
 
         throw new NotImplementedException($"Unknown share {shareName}");
     }
+
+    public string GetPath(string share, string path) {
+        var sharePath = GetSharePath(share);
+        if(string.IsNullOrEmpty(path)) {
+            return sharePath;
+        }
+
+        var absolutePath = Path.GetFullPath(Path.Combine(sharePath, path));
+        if(!absolutePath.StartsWith(sharePath)) {
+            throw new Exception("Invalid path");
+        }
+
+        return absolutePath;
+    }
 }

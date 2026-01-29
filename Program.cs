@@ -8,6 +8,9 @@ builder.Services.AddSingleton<ShareMapping>();
 builder.Services.AddSingleton<UserCredentials>();
 builder.Services.AddSingleton<DefaultViews>();
 
+builder.Services.AddScoped<IFaceDetectionService, FaceDetectionService>();
+builder.Services.AddScoped<IImageThumbnailService, ImageThumbnailService>();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -15,12 +18,16 @@ builder.Services.AddSingleton<IUserAuthenticationService, UserAuthenticationServ
 builder.Services.AddSingleton<IShareService, ShareService>();
 builder.Services.AddSingleton<IBrowseService, BrowseService>();
 
-// builder.Services.AddDistributedMemoryCache();
-builder.Services.AddStackExchangeRedisCache(options =>
- {
-     options.Configuration = builder.Configuration.GetConnectionString("RedisCache");
-     options.InstanceName = "WebFileViewerCache";
- });
+var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
+if(cacheType == "redis") {
+    builder.Services.AddStackExchangeRedisCache(options =>
+     {
+         options.Configuration = builder.Configuration.GetConnectionString("RedisCache");
+         options.InstanceName = "WebFileViewerCache";
+     });
+}else{
+    builder.Services.AddDistributedMemoryCache();
+}
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
