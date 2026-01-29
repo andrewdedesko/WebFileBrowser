@@ -194,9 +194,9 @@ public class BrowseController : Controller
     }
 
     [ResponseCache(CacheProfileName = "Media")]
-    public IActionResult Thumbnail(string share, string path)
+    public async Task<IActionResult> Thumbnail(string share, string path)
     {
-        var thumbnail = _imageThumbnailService.GetImageThumbnail(share, path);
+        var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path);
         return File(thumbnail, "image/jpeg");
     }
 
