@@ -35,7 +35,7 @@ public class ImageThumbnailService : IImageThumbnailService {
             // var data = GetThumbnailImageFromMiddleImage(share, path);
             // var data = GetThumbnailImageUsingComplicatedFaceDetection(share, path);
             // GetThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
-        }else if(File.Exists(filePath) && IsImage(filePath)) {
+        } else if(File.Exists(filePath) && IsImage(filePath)) {
             data = GetImageFileThumbnailImage(share, path);
             cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromHours(1));
         }
@@ -169,31 +169,36 @@ public class ImageThumbnailService : IImageThumbnailService {
 
                     attempts++;
 
-                    using(var srcImage = Image.Load<Rgb24>(imagePath)) {
-                        var imgCopy = srcImage.Clone();
-                        var cropRect = new Rectangle(srcImage.Bounds.Width / 8, srcImage.Bounds.Height / 8, srcImage.Bounds.Width * 6 / 8, srcImage.Bounds.Height * 6 / 8);
-                        imgCopy.Mutate(i => i.Crop(cropRect));
+                    try {
+                        using(var srcImage = Image.Load<Rgb24>(imagePath)) {
+                            var imgCopy = srcImage.Clone();
+                            var cropRect = new Rectangle(srcImage.Bounds.Width / 8, srcImage.Bounds.Height / 8, srcImage.Bounds.Width * 6 / 8, srcImage.Bounds.Height * 6 / 8);
+                            imgCopy.Mutate(i => i.Crop(cropRect));
 
-                        var faces = det.DetectFaces(imgCopy);
-                        if(!faces.Any()) {
-                            continue;
+                            var faces = det.DetectFaces(imgCopy);
+                            if(!faces.Any()) {
+                                continue;
+                            }
+
+                            var eyeDetectionResult = det.CountEyeStates(eyeDet, imgCopy);
+                            if(eyeDetectionResult.ClosedEyes > 0) {
+                                continue;
+                            }
+
+                            // foreach(var face in faces) {
+                            //     var rectangle = new Rectangle((int)Math.Floor(face.Box.Left), (int)Math.Floor(face.Box.Top), (int)Math.Floor(face.Box.Width), (int)Math.Floor(face.Box.Height));
+                            //     srcImage.Mutate(i => i.Fill(Color.Red, rectangle));
+                            // }
+
+                            ScaleImageToThumbnail(srcImage);
+                            // var star = new SixLabors.ImageSharp.Drawing.Star(x: 25.0f, y: 25.0f, prongs: 5, innerRadii: 10.0f, outerRadii: 15.0f);
+                            // srcImage.Mutate(x => x.Fill(Color.RebeccaPurple, star));
+
+                            return GetImageAsJpgBytes(srcImage);
                         }
-
-                        var eyeDetectionResult = det.CountEyeStates(eyeDet, imgCopy);
-                        if(eyeDetectionResult.ClosedEyes > 0) {
-                            continue;
-                        }
-
-                        // foreach(var face in faces) {
-                        //     var rectangle = new Rectangle((int)Math.Floor(face.Box.Left), (int)Math.Floor(face.Box.Top), (int)Math.Floor(face.Box.Width), (int)Math.Floor(face.Box.Height));
-                        //     srcImage.Mutate(i => i.Fill(Color.Red, rectangle));
-                        // }
-
-                        ScaleImageToThumbnail(srcImage);
-                        // var star = new SixLabors.ImageSharp.Drawing.Star(x: 25.0f, y: 25.0f, prongs: 5, innerRadii: 10.0f, outerRadii: 15.0f);
-                        // srcImage.Mutate(x => x.Fill(Color.RebeccaPurple, star));
-
-                        return GetImageAsJpgBytes(srcImage);
+                    } catch(Exception) {
+                        attempts++;
+                        continue;
                     }
                 }
             }
