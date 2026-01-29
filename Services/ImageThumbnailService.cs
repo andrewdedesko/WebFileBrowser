@@ -10,15 +10,13 @@ namespace WebFileBrowser.Services;
 public class ImageThumbnailService : IImageThumbnailService {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
-    private readonly IFaceDetectionService _faceDetectionService;
     private readonly IDistributedCache _cache;
 
     private readonly int _numberOfCandidates = 4;
 
-    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFaceDetectionService faceDetectionService, IDistributedCache cache) {
+    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IDistributedCache cache) {
         _shareService = shareService;
         _browseService = browseService;
-        _faceDetectionService = faceDetectionService;
         _cache = cache;
     }
 

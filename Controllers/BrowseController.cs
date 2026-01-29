@@ -4,12 +4,8 @@ using Microsoft.AspNetCore.StaticFiles;
 using WebFileBrowser.Models;
 using WebFileBrowser.Services;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using Microsoft.Extensions.Caching.Distributed;
-using System.Text.RegularExpressions;
 using WebFileBrowser.Configuration;
-using FaceAiSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 
 namespace WebFileBrowser.Controllers;
@@ -134,37 +130,6 @@ public class BrowseController : Controller
         });
     }
 
-    public IActionResult FaceDetection(string share, string path)
-    {
-        var det = FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
-        var imagePaths = _browseService.GetFiles(share, path)
-            .Where(IsImage)
-            .OrderBy(p => Path.GetFileName(p))
-            .AsEnumerable();
-        var sharePath = _shareService.GetSharePath(share);
-
-        var images = new List<ImageFaceDetectionResult>();
-        
-        foreach(var p in imagePaths)
-        {
-            var image = SixLabors.ImageSharp.Image.Load<Rgb24>(Path.Join(sharePath, p));
-            var faceCount = det.CountFaces(image);
-
-            images.Add(new ImageFaceDetectionResult()
-            {
-                Share = share,
-                Path = p,
-                Filename = Path.GetFileName(p),
-                FaceCount = faceCount
-            });
-        }
-
-        return View(new GalleryFaceDetectionResultViewModel()
-        {
-            Images = images.AsEnumerable()
-        });
-    }
-
     public IActionResult ViewImages(string share, string path, string image)
     {
         var images = _browseService.GetFiles(share, path)
@@ -233,23 +198,6 @@ public class BrowseController : Controller
     {
         var thumbnail = _imageThumbnailService.GetImageThumbnail(share, path);
         return File(thumbnail, "image/jpeg");
-    }
-
-    [HttpGet]
-    public IActionResult ExplainThumbnail(string share, string path)
-    {
-        var thumbnailCandidates = _imageThumbnailService.GetImageThumbnailCandidates(share, path);
-        var selectedCandidate = _imageThumbnailService.PickThumbnailCandidate(thumbnailCandidates);
-        selectedCandidate.TopPick = true;
-
-        thumbnailCandidates.Candidates = thumbnailCandidates.Candidates
-            .OrderByDescending(c => c.TopPick)
-            .AsEnumerable();
-
-        return View(new ExplainThumbnailViewModel()
-        {
-            ImageThumbnailCandidateSet = thumbnailCandidates
-        });
     }
 
     private bool IsImage(string filename)

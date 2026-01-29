@@ -8,7 +8,6 @@ builder.Services.AddSingleton<ShareMapping>();
 builder.Services.AddSingleton<UserCredentials>();
 builder.Services.AddSingleton<DefaultViews>();
 
-builder.Services.AddScoped<IFaceDetectionService, FaceDetectionService>();
 builder.Services.AddScoped<IImageThumbnailService, ImageThumbnailService>();
 
 // Add services to the container.
