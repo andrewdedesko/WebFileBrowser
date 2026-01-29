@@ -109,7 +109,7 @@ public class BrowseController : Controller
 
         var viewName = "Index";
         if (string.IsNullOrEmpty(view)) {
-            if(!string.IsNullOrEmpty(path)){
+            if(!string.IsNullOrEmpty(path) && directories.Any()){
                 if (PathMatchesThumbnailViewPatterns(path)){
                     viewName = "PreviewIndex";
                 }
