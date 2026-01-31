@@ -33,12 +33,12 @@ public class ImageThumbnailService : IImageThumbnailService {
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
             // data = GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
-            var t = _thumbnailQueue.EnqueueAsync(filePath);
+            // var t = _thumbnailQueue.EnqueueAsync(filePath);
             data = _imageThumbnailer.GetThumbnailImageFromMiddleImage(share, path);
-            cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+            // cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
             // var data = GetThumbnailImageUsingComplicatedFaceDetection(share, path);
             // GetThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
-            await t;
+            // await t;
 
         } else if(!File.Exists(filePath)) {
             throw new Exception($"Cannot choose a thumbnailer for {filePath} because the file does not exist");
