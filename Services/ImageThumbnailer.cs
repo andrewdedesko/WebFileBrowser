@@ -165,7 +165,7 @@ public class ImageThumbnailer {
         return thumbnailData;
     }
 
-    private void ScaleImageToThumbnail(Image image) {
+    public void ScaleImageToThumbnail(Image image) {
         var width = 0;
         var height = 0;
 

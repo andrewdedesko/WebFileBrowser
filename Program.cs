@@ -12,6 +12,7 @@ builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
     return new BackgroundThumbnailQueue(1000);
 });
 builder.Services.AddSingleton<ImageThumbnailer>();
+builder.Services.AddSingleton<VideoThumbnailer>();
 builder.Services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
 builder.Services.AddHostedService<ThumbnailBackgroundProcessingService>();
 

@@ -1,3 +1,4 @@
+using System.Collections;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace WebFileBrowser.Services;
@@ -6,15 +7,17 @@ public class ImageThumbnailService : IImageThumbnailService {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
     private readonly ImageThumbnailer _imageThumbnailer;
+    private readonly VideoThumbnailer _videoThumbnailer;
     private readonly IDistributedCache _cache;
 
     private readonly BackgroundThumbnailQueue _thumbnailQueue;
 
-    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer) {
+    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer) {
         _shareService = shareService;
         _browseService = browseService;
         _thumbnailQueue = thumbnailQueue;
         _imageThumbnailer = imageThumbnailer;
+        _videoThumbnailer = videoThumbnailer;
         _cache = cache;
     }
 
@@ -36,9 +39,16 @@ public class ImageThumbnailService : IImageThumbnailService {
             // var data = GetThumbnailImageUsingComplicatedFaceDetection(share, path);
             // GetThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
             await t;
-        } else if(File.Exists(filePath) && IsImage(filePath)) {
+
+        } else if(!File.Exists(filePath)) {
+            throw new Exception($"Cannot choose a thumbnailer for {filePath} because the file does not exist");
+
+        } else if(IsImage(filePath)) {
             data = _imageThumbnailer.GetImageFileThumbnailImage(share, path);
             cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromHours(1));
+
+        } else if(IsVideo(filePath)) {
+            data = _videoThumbnailer.GetVideoThumbnail(filePath);
         }
 
 
@@ -65,6 +75,18 @@ public class ImageThumbnailService : IImageThumbnailService {
                 return true;
 
             default:
+                return false;
+        }
+    }
+
+    private bool IsVideo(string path) {
+        var extension = Path.GetExtension(path).ToLower();
+        switch(extension) {
+            case ".mp4":
+            case ".webm":
+                return true;
+
+            default: 
                 return false;
         }
     }
