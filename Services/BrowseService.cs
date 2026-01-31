@@ -17,6 +17,7 @@ class BrowseService : IBrowseService
         var sharePath = _shareService.GetSharePath(share);
         var dirPath = GetPath(share, path);
         return Directory.GetDirectories(dirPath)
+            .Where(IsNotHidden)
             .Select(p => Path.GetRelativePath(sharePath, p))
             .AsEnumerable();
     }
@@ -26,9 +27,27 @@ class BrowseService : IBrowseService
         var sharePath = _shareService.GetSharePath(share);
         var dirPath = GetPath(share, path);
         return Directory.GetFiles(dirPath)
+            .Where(IsNotHidden)
+            .Where(IsNotSystemFile)
             .Select(p => Path.GetRelativePath(sharePath, p))
             .AsEnumerable();
     }
 
-    private string GetPath(string share, string path) => _shareService.GetPath(share, path);
+    private string GetPath(string share, string path) =>
+        _shareService.GetPath(share, path);
+
+    private bool IsHidden(string path) =>
+        Path.GetFileName(path).StartsWith(".");
+
+    private bool IsNotHidden(string path) =>
+        !IsHidden(path);
+
+    private bool IsNotSystemFile(string path) {
+        var fileName = Path.GetFileName(path).ToLower();
+        if(fileName == "thumbs.db") {
+            return false;
+        }
+
+        return true;
+    }
 }

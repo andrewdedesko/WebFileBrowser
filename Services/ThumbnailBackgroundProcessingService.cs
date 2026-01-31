@@ -16,7 +16,7 @@ public class ThumbnailBackgroundProcessingService : BackgroundService {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         while(!stoppingToken.IsCancellationRequested) {
             var path = await _queue.DequeueAsync(stoppingToken);
-            _logger.LogInformation($"Processing thumbnail for {path}");
+            _logger.LogTrace($"Processing thumbnail for {path}");
             try {
                 if(Directory.Exists(path)) {
                     var data = _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(path);
