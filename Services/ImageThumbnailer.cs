@@ -169,7 +169,8 @@ public class ImageThumbnailer {
     private byte[] _GetImageAsWebpBytes(Image image) {
         var thumbnailImageStream = new MemoryStream();
         image.SaveAsWebp(thumbnailImageStream, new SixLabors.ImageSharp.Formats.Webp.WebpEncoder() {
-            FileFormat = SixLabors.ImageSharp.Formats.Webp.WebpFileFormatType.Lossy
+            FileFormat = SixLabors.ImageSharp.Formats.Webp.WebpFileFormatType.Lossy,
+            Quality = 100
         });
 
         var thumbnailData = thumbnailImageStream.ToArray();
