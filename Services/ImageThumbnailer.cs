@@ -158,8 +158,6 @@ public class ImageThumbnailer {
         _GetImageAsJpgBytes(image);
 
     public byte[] _GetImageAsJpgBytes(Image image) {
-        ScaleImageToThumbnail(image);
-
         var thumbnailImageStream = new MemoryStream();
         var writer = new StreamWriter(thumbnailImageStream);
         image.SaveAsJpeg(thumbnailImageStream);
