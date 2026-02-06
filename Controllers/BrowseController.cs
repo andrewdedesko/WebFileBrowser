@@ -197,7 +197,7 @@ public class BrowseController : Controller
     public async Task<IActionResult> Thumbnail(string share, string path)
     {
         var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path);
-        return File(thumbnail, "image/jpeg");
+        return File(thumbnail, "image/webp");
     }
 
     private bool IsImage(string filename)

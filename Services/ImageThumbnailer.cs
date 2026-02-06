@@ -155,12 +155,22 @@ public class ImageThumbnailer {
     }
 
     public byte[] GetImageAsBytes(Image image) =>
-        _GetImageAsJpgBytes(image);
+        _GetImageAsWebpBytes(image);
 
     private byte[] _GetImageAsJpgBytes(Image image) {
         var thumbnailImageStream = new MemoryStream();
         var writer = new StreamWriter(thumbnailImageStream);
         image.SaveAsJpeg(thumbnailImageStream);
+
+        var thumbnailData = thumbnailImageStream.ToArray();
+        return thumbnailData;
+    }
+
+    private byte[] _GetImageAsWebpBytes(Image image) {
+        var thumbnailImageStream = new MemoryStream();
+        image.SaveAsWebp(thumbnailImageStream, new SixLabors.ImageSharp.Formats.Webp.WebpEncoder() {
+            FileFormat = SixLabors.ImageSharp.Formats.Webp.WebpFileFormatType.Lossy
+        });
 
         var thumbnailData = thumbnailImageStream.ToArray();
         return thumbnailData;

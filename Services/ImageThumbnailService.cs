@@ -22,7 +22,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     }
 
     public async Task<byte[]> GetImageThumbnail(string share, string path) {
-        var cacheKey = $"Thumbnail:Image:{_shareService.GetPath(share, path)}";
+        var cacheKey = $"Thumbnail:Image:webp:{_shareService.GetPath(share, path)}";
         var cachedThumbnail = _cache.Get(cacheKey);
         if(cachedThumbnail != null) {
             return cachedThumbnail;
@@ -92,7 +92,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     }
 
     public async Task SetThumbnailCacheAsync(string filePath, byte[] thumbnailData) {
-        var cacheKey = $"Thumbnail:Image:{filePath}";
+        var cacheKey = $"Thumbnail:Image:webp:{filePath}";
         await _cache.SetAsync(cacheKey, thumbnailData);
     }
 }
