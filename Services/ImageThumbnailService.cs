@@ -37,7 +37,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         if(Directory.Exists(filePath)) {
             // data = GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
             // var t = _thumbnailQueue.EnqueueAsync(filePath);
-            data = _imageThumbnailer.GetThumbnailImageFromMiddleImage(share, path);
+            data = _imageThumbnailer.GetThumbnailImage(share, path);
             // cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
             // var data = GetThumbnailImageUsingComplicatedFaceDetection(share, path);
             // GetThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);

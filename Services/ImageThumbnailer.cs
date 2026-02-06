@@ -14,7 +14,11 @@ public class ImageThumbnailer {
         _fileTypeService = fileTypeService;
     }
 
-    public byte[]? GetThumbnailImageFromMiddleImage(string share, string path) {
+    public byte[]? GetThumbnailImage(string share, string path) {
+        return GetThumbnailImageFromMiddleImage(share, path);
+    }
+
+    private byte[]? GetThumbnailImageFromMiddleImage(string share, string path) {
         string? thumbnailFilePath = null;
         var attr = System.IO.File.GetAttributes(Path.Join(_shareService.GetSharePath(share), path));
         if(true || attr.HasFlag(FileAttributes.Directory)) {
