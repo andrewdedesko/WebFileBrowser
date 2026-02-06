@@ -20,11 +20,6 @@ public class BrowseController : Controller
     private readonly DefaultViews _defaultViews;
     private readonly IDistributedCache _cache;
 
-    private readonly IEnumerable<string> _imageExtensions = new List<string>()
-    {
-        "jpg", "jpeg", "png", "webp", "gif"
-    };
-
     public BrowseController(IShareService shareService, IBrowseService browseService, DefaultViews defaultViews, IImageThumbnailService imageThumbnailService, IDistributedCache cache, IFileTypeService fileTypeService) {
         _shareService = shareService;
         _browseService = browseService;

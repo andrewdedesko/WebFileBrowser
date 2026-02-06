@@ -7,6 +7,15 @@ class BrowseService : IBrowseService, IFileTypeService
 {
     private readonly IShareService _shareService;
 
+    private readonly IEnumerable<string> _imageExtensions = new List<string>()
+    {
+        ".jpg", ".jpeg", ".png", ".webp", ".gif"
+    };
+
+    private readonly IEnumerable<string> _videoExtensions = new List<string>() {
+        ".mp4", ".m4v", ".webm"
+    };
+
     public BrowseService(IShareService shareService)
     {
         _shareService = shareService;
@@ -43,28 +52,12 @@ class BrowseService : IBrowseService, IFileTypeService
 
     public bool IsImage(string path) {
         var extension = Path.GetExtension(path).ToLower();
-        switch(extension) {
-            case ".jpg":
-            case ".jpeg":
-            case ".png":
-            case ".webp":
-                return true;
-
-            default:
-                return false;
-        }
+        return _imageExtensions.Contains(extension);
     }
 
     public bool IsVideo(string path) {
         var extension = Path.GetExtension(path).ToLower();
-        switch(extension) {
-            case ".mp4":
-            case ".webm":
-                return true;
-
-            default:
-                return false;
-        }
+        return _videoExtensions.Contains(extension);
     }
 
     
