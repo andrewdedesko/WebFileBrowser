@@ -45,7 +45,7 @@ public class ImageThumbnailer {
 
         using(var srcImage = Image.Load<Rgb24>(thumbnailFilePath)) {
             ScaleImageToThumbnail(srcImage);
-            return GetImageAsJpgBytes(srcImage);
+            return GetImageAsBytes(srcImage);
         }
     }
 
@@ -112,7 +112,7 @@ public class ImageThumbnailer {
                             // var star = new SixLabors.ImageSharp.Drawing.Star(x: 25.0f, y: 25.0f, prongs: 5, innerRadii: 10.0f, outerRadii: 15.0f);
                             // srcImage.Mutate(x => x.Fill(Color.RebeccaPurple, star));
 
-                            return GetImageAsJpgBytes(srcImage);
+                            return GetImageAsBytes(srcImage);
                         }
                     } catch(Exception) {
                         attempts++;
@@ -130,7 +130,7 @@ public class ImageThumbnailer {
         if(firstImage != null) {
             using(var srcImage = Image.Load<Rgb24>(firstImage)) {
                 ScaleImageToThumbnail(srcImage);
-                return GetImageAsJpgBytes(srcImage);
+                return GetImageAsBytes(srcImage);
             }
         }
 
@@ -150,11 +150,14 @@ public class ImageThumbnailer {
 
         using(var srcImage = Image.Load<Rgb24>(imagePath)) {
             ScaleImageToThumbnail(srcImage);
-            return GetImageAsJpgBytes(srcImage);
+            return GetImageAsBytes(srcImage);
         }
     }
 
-    public byte[] GetImageAsJpgBytes(Image image) {
+    public byte[] GetImageAsBytes(Image image) =>
+        _GetImageAsJpgBytes(image);
+
+    public byte[] _GetImageAsJpgBytes(Image image) {
         ScaleImageToThumbnail(image);
 
         var thumbnailImageStream = new MemoryStream();

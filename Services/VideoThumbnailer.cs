@@ -18,7 +18,7 @@ public class VideoThumbnailer {
 
         using(var srcImage = Image.Load<Rgb24>(thumbnailPath)) {
             _imageThumbnailer.ScaleImageToThumbnail(srcImage);
-            return _imageThumbnailer.GetImageAsJpgBytes(srcImage);
+            return _imageThumbnailer.GetImageAsBytes(srcImage);
         }
     }
 
