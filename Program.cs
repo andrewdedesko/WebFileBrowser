@@ -4,9 +4,17 @@ using WebFileBrowser.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
 builder.Services.AddSingleton<ShareMapping>();
 builder.Services.AddSingleton<UserCredentials>();
 builder.Services.AddSingleton<DefaultViews>();
+
+builder.Services.AddSingleton<IUserAuthenticationService, UserAuthenticationService>();
+builder.Services.AddSingleton<IShareService, ShareService>();
+builder.Services.AddSingleton<IBrowseService, BrowseService>();
+builder.Services.AddSingleton<IFileTypeService, BrowseService>();
 
 builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
     return new BackgroundThumbnailQueue(1000);
@@ -15,13 +23,6 @@ builder.Services.AddSingleton<ImageThumbnailer>();
 builder.Services.AddSingleton<VideoThumbnailer>();
 builder.Services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
 builder.Services.AddHostedService<ThumbnailBackgroundProcessingService>();
-
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-
-builder.Services.AddSingleton<IUserAuthenticationService, UserAuthenticationService>();
-builder.Services.AddSingleton<IShareService, ShareService>();
-builder.Services.AddSingleton<IBrowseService, BrowseService>();
 
 var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
 if(cacheType == "redis") {

@@ -15,6 +15,7 @@ public class BrowseController : Controller
 {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
+    private readonly IFileTypeService _fileTypeService;
     private readonly IImageThumbnailService _imageThumbnailService;
     private readonly DefaultViews _defaultViews;
     private readonly IDistributedCache _cache;
@@ -24,10 +25,10 @@ public class BrowseController : Controller
         "jpg", "jpeg", "png", "webp", "gif"
     };
 
-    public BrowseController(IShareService shareService, IBrowseService browseService, DefaultViews defaultViews, IImageThumbnailService imageThumbnailService, IDistributedCache cache)
-    {
+    public BrowseController(IShareService shareService, IBrowseService browseService, DefaultViews defaultViews, IImageThumbnailService imageThumbnailService, IDistributedCache cache, IFileTypeService fileTypeService) {
         _shareService = shareService;
         _browseService = browseService;
+        _fileTypeService = fileTypeService;
         _defaultViews = defaultViews;
         _imageThumbnailService = imageThumbnailService;
         _cache = cache;
@@ -79,13 +80,13 @@ public class BrowseController : Controller
                 Name = Path.GetFileName(f),
                 Share = share,
                 Path = f,
-                IsImage = IsImage(Path.GetFileName(f)),
-                IsVideo = IsVideo(Path.GetExtension(f).ToLower())
+                IsImage = _fileTypeService.IsImage(Path.GetFileName(f)),
+                IsVideo = _fileTypeService.IsVideo(Path.GetExtension(f).ToLower())
             })
             .OrderBy(f => f.Name)
             .AsEnumerable();
 
-        var directoryContainsImages = files.Any(f => IsImage(f));
+        var directoryContainsImages = files.Any(f => _fileTypeService.IsImage(f));
 
         IList<PathViewModel> pathComponents = new List<PathViewModel>();
         var shareDir = new DirectoryInfo(_shareService.GetSharePath(share));
@@ -133,7 +134,7 @@ public class BrowseController : Controller
     public IActionResult ViewImages(string share, string path, string image)
     {
         var images = _browseService.GetFiles(share, path)
-            .Where(f => IsImage(f))
+            .Where(f => _fileTypeService.IsImage(f))
             .Select(f => new FileViewModel()
             {
                 Name = Path.GetFileName(f),
@@ -199,35 +200,6 @@ public class BrowseController : Controller
         var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path);
         return File(thumbnail, "image/webp");
     }
-
-    private bool IsImage(string filename)
-    {
-        if (IsMacDotUnderscoreFile(filename))
-        {
-            return false;
-        }
-
-        var extension = Path.GetExtension(filename).ToLower();
-        return IsJpgExtension(extension) || IsPngExtension(extension) || IsExtensionWebp(extension) || IsGifExtension(extension);
-    }
-
-    private bool IsMacDotUnderscoreFile(string filename) =>
-        Path.GetFileName(filename).StartsWith("._");
-
-    private bool IsJpgExtension(string extension) =>
-        extension == ".jpg" || extension == ".jpeg";
-
-    private bool IsPngExtension(string extension) =>
-        extension == ".png";
-    
-    private bool IsGifExtension(string extension) =>
-        extension == ".gif";
-    
-    private bool IsExtensionWebp(string extension) =>
-        extension == ".webp";
-
-    private bool IsVideo(string extension) => 
-        IsMp4(extension) || IsWebm(extension);
 
     private bool IsMp4(string extension) =>
         extension == ".mp4";

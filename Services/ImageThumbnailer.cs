@@ -7,9 +7,11 @@ namespace WebFileBrowser.Services;
 
 public class ImageThumbnailer {
     private readonly IShareService _shareService;
+    private readonly IFileTypeService _fileTypeService;
 
-    public ImageThumbnailer(IShareService shareService) {
+    public ImageThumbnailer(IShareService shareService, IFileTypeService fileTypeService) {
         _shareService = shareService;
+        _fileTypeService = fileTypeService;
     }
 
     public byte[]? GetThumbnailImageFromMiddleImage(string share, string path) {
@@ -22,7 +24,7 @@ public class ImageThumbnailer {
             while(thumbnailFilePath == null && dirs.Count > 0) {
                 var currPath = dirs.Dequeue();
                 var imageFiles = Directory.GetFiles(currPath)
-                    .Where(f => IsImage(Path.GetFileName(f)))
+                    .Where(f => _fileTypeService.IsImage(Path.GetFileName(f)))
                     .Order()
                     .ToArray();
 
@@ -66,7 +68,7 @@ public class ImageThumbnailer {
         while(attempts < 3 && dirs.Count > 0) {
             var currPath = dirs.Dequeue();
             var imageFiles = Directory.GetFiles(currPath)
-                .Where(f => IsImage(Path.GetFileName(f)))
+                .Where(f => _fileTypeService.IsImage(Path.GetFileName(f)))
                 .Order()
                 .ToArray();
 
@@ -144,7 +146,7 @@ public class ImageThumbnailer {
             throw new Exception($"{share}:{path} is not a file");
         }
 
-        if(!IsImage(imagePath)) {
+        if(!_fileTypeService.IsImage(imagePath)) {
             throw new Exception($"{share}:{path} is not a supported image");
         }
 
@@ -189,16 +191,5 @@ public class ImageThumbnailer {
         image.Mutate(x => x.Resize(width, height));
     }
 
-    private bool IsImage(string path) {
-        var extension = Path.GetExtension(path).ToLower();
-        switch(extension) {
-            case ".jpg":
-            case ".jpeg":
-            case ".png":
-                return true;
-
-            default:
-                return false;
-        }
-    }
+    
 }

@@ -6,15 +6,17 @@ namespace WebFileBrowser.Services;
 public class ImageThumbnailService : IImageThumbnailService {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
+    private readonly IFileTypeService _fileTypeService;
     private readonly ImageThumbnailer _imageThumbnailer;
     private readonly VideoThumbnailer _videoThumbnailer;
     private readonly IDistributedCache _cache;
 
     private readonly BackgroundThumbnailQueue _thumbnailQueue;
 
-    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer) {
+    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer) {
         _shareService = shareService;
         _browseService = browseService;
+        _fileTypeService = fileTypeService;
         _thumbnailQueue = thumbnailQueue;
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
@@ -43,11 +45,11 @@ public class ImageThumbnailService : IImageThumbnailService {
         } else if(!File.Exists(filePath)) {
             throw new Exception($"Cannot choose a thumbnailer for {filePath} because the file does not exist");
 
-        } else if(IsImage(filePath)) {
+        } else if(_fileTypeService.IsImage(filePath)) {
             data = _imageThumbnailer.GetImageFileThumbnailImage(share, path);
             cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromHours(1));
 
-        } else if(IsVideo(filePath)) {
+        } else if(_fileTypeService.IsVideo(filePath)) {
             data = _videoThumbnailer.GetVideoThumbnail(filePath);
         }
 
@@ -64,31 +66,6 @@ public class ImageThumbnailService : IImageThumbnailService {
 
     private byte[]? GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(string share, string path) {
         return _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(_shareService.GetPath(share, path));
-    }
-
-    private bool IsImage(string path) {
-        var extension = Path.GetExtension(path).ToLower();
-        switch(extension) {
-            case ".jpg":
-            case ".jpeg":
-            case ".png":
-                return true;
-
-            default:
-                return false;
-        }
-    }
-
-    private bool IsVideo(string path) {
-        var extension = Path.GetExtension(path).ToLower();
-        switch(extension) {
-            case ".mp4":
-            case ".webm":
-                return true;
-
-            default: 
-                return false;
-        }
     }
 
     public async Task SetThumbnailCacheAsync(string filePath, byte[] thumbnailData) {

@@ -3,7 +3,7 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace WebFileBrowser.Services;
 
-class BrowseService : IBrowseService
+class BrowseService : IBrowseService, IFileTypeService
 {
     private readonly IShareService _shareService;
 
@@ -33,13 +33,46 @@ class BrowseService : IBrowseService
             .AsEnumerable();
     }
 
+    public bool IsFile(string shareName, string path) {
+        var fsPath = GetPath(shareName, path);
+        return File.Exists(fsPath);
+    }
+
+    bool IBrowseService.IsDirectory(string shareName, string path) =>
+        Directory.Exists(GetPath(shareName, path));
+
+    public bool IsImage(string path) {
+        var extension = Path.GetExtension(path).ToLower();
+        switch(extension) {
+            case ".jpg":
+            case ".jpeg":
+            case ".png":
+            case ".webp":
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    public bool IsVideo(string path) {
+        var extension = Path.GetExtension(path).ToLower();
+        switch(extension) {
+            case ".mp4":
+            case ".webm":
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    
+
     private string GetPath(string share, string path) =>
         _shareService.GetPath(share, path);
 
-    private bool IsHidden(string path) =>
-        Path.GetFileName(path).StartsWith(".");
-
-    private bool IsNotHidden(string path) =>
+    public bool IsNotHidden(string path) =>
         !IsHidden(path);
 
     private bool IsNotSystemFile(string path) {
@@ -50,4 +83,10 @@ class BrowseService : IBrowseService
 
         return true;
     }
+
+    public bool IsMacDotUnderscoreFile(string path) =>
+        Path.GetFileName(path).StartsWith("._");
+
+    public bool IsHidden(string path) =>
+        Path.GetFileName(path).StartsWith(".");
 }
