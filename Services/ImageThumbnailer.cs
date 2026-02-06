@@ -1,7 +1,9 @@
+using System.Text.Json;
 using FaceAiSharp;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using WebFileBrowser.Models;
 
 namespace WebFileBrowser.Services;
 
@@ -15,7 +17,32 @@ public class ImageThumbnailer {
     }
 
     public byte[]? GetThumbnailImage(string share, string path) {
+        var customThumbnailPath = _findCustomThumbnailFile(share, path);
+        if(!string.IsNullOrEmpty(customThumbnailPath)) {
+            using(var srcImage = Image.Load<Rgb24>(customThumbnailPath)) {
+                ScaleImageToThumbnail(srcImage);
+                return GetImageAsBytes(srcImage);
+            }
+        }
+
         return GetThumbnailImageFromMiddleImage(share, path);
+    }
+
+    private string? _findCustomThumbnailFile(string share, string path) {
+        var fsPath = _shareService.GetPath(share, path);
+        if(!_fileTypeService.IsDirectory(fsPath)) {
+            return null;
+        }
+
+        var thumbnailConfigPath = Path.Combine(fsPath, ".thumbnail.json");
+        if(_fileTypeService.IsFile(thumbnailConfigPath)) {
+            var thumbnailConfig = JsonSerializer.Deserialize<ThumbnailConfig>(File.ReadAllText(thumbnailConfigPath));
+            if(thumbnailConfig != null && !string.IsNullOrEmpty(thumbnailConfig.Thumbnail)) {
+                return Path.Combine(fsPath, thumbnailConfig.Thumbnail);
+            }
+        }
+
+        return null;
     }
 
     private byte[]? GetThumbnailImageFromMiddleImage(string share, string path) {

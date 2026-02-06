@@ -1,6 +1,8 @@
 namespace WebFileBrowser.Services;
 
 public interface IFileTypeService {
+    public bool IsFile(string path);
+    public bool IsDirectory(string path);
     public bool IsImage(string path);
     public bool IsVideo(string path);
     public bool IsMacDotUnderscoreFile(string path);

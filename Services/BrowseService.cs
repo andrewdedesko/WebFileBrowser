@@ -42,13 +42,17 @@ class BrowseService : IBrowseService, IFileTypeService
             .AsEnumerable();
     }
 
-    public bool IsFile(string shareName, string path) {
-        var fsPath = GetPath(shareName, path);
-        return File.Exists(fsPath);
-    }
+    public bool IsFile(string shareName, string path) =>
+        IsFile(GetPath(shareName, path));
 
-    bool IBrowseService.IsDirectory(string shareName, string path) =>
-        Directory.Exists(GetPath(shareName, path));
+    public bool IsFile(string path) =>
+        File.Exists(path);
+
+    public bool IsDirectory(string shareName, string path) =>
+        IsDirectory(GetPath(shareName, path));
+
+    public bool IsDirectory(string path) =>
+        Directory.Exists(path);
 
     public bool IsImage(string path) {
         var extension = Path.GetExtension(path).ToLower();
@@ -59,8 +63,6 @@ class BrowseService : IBrowseService, IFileTypeService
         var extension = Path.GetExtension(path).ToLower();
         return _videoExtensions.Contains(extension);
     }
-
-    
 
     private string GetPath(string share, string path) =>
         _shareService.GetPath(share, path);
