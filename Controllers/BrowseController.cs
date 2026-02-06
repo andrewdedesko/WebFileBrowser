@@ -193,7 +193,7 @@ public class BrowseController : Controller
     public async Task<IActionResult> Thumbnail(string share, string path)
     {
         var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path);
-        return File(thumbnail, "image/webp");
+        return File(thumbnail, _imageThumbnailService.GetThumbnailImageMimeType());
     }
 
     private bool IsMp4(string extension) =>

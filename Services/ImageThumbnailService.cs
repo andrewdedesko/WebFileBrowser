@@ -1,4 +1,3 @@
-using System.Collections;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace WebFileBrowser.Services;
@@ -13,6 +12,8 @@ public class ImageThumbnailService : IImageThumbnailService {
 
     private readonly BackgroundThumbnailQueue _thumbnailQueue;
 
+    private readonly string _thumbnailImageMimeType = "image/webp";
+
     public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer) {
         _shareService = shareService;
         _browseService = browseService;
@@ -24,7 +25,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     }
 
     public async Task<byte[]> GetImageThumbnail(string share, string path) {
-        var cacheKey = $"Thumbnail:Image:webp:{_shareService.GetPath(share, path)}";
+        var cacheKey = _thumbnailCacheKey(share, path);
         var cachedThumbnail = _cache.Get(cacheKey);
         if(cachedThumbnail != null) {
             return cachedThumbnail;
@@ -62,14 +63,20 @@ public class ImageThumbnailService : IImageThumbnailService {
         return data;
     }
 
-    
+    public string GetThumbnailImageMimeType() =>
+        _thumbnailImageMimeType;
 
     private byte[]? GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(string share, string path) {
         return _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(_shareService.GetPath(share, path));
     }
 
     public async Task SetThumbnailCacheAsync(string filePath, byte[] thumbnailData) {
-        var cacheKey = $"Thumbnail:Image:webp:{filePath}";
-        await _cache.SetAsync(cacheKey, thumbnailData);
+        await _cache.SetAsync(_thumbnailCacheKey(filePath), thumbnailData);
     }
+
+    private string _thumbnailCacheKey(string share, string path) =>
+        _thumbnailCacheKey(_shareService.GetPath(share, path));
+    
+    private string _thumbnailCacheKey(string path) =>
+        $"Thumbnail:Image:{_thumbnailImageMimeType}:{path}";
 }
