@@ -196,6 +196,11 @@ public class BrowseController : Controller
         return File(thumbnail, _imageThumbnailService.GetThumbnailImageMimeType());
     }
 
+    public async Task<IActionResult> FlushThumbnail(string share, string path) {
+        await _imageThumbnailService.FlushThumbnailFromCache(share, path);
+        return Ok();
+    }
+
     private bool IsMp4(string extension) =>
         extension == ".mp4";
 

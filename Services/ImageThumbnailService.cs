@@ -63,6 +63,10 @@ public class ImageThumbnailService : IImageThumbnailService {
         return data;
     }
 
+    public Task FlushThumbnailFromCache(string share, string path) {
+        return _cache.RemoveAsync(_thumbnailCacheKey(share, path));
+    }
+
     public string GetThumbnailImageMimeType() =>
         _thumbnailImageMimeType;
 
