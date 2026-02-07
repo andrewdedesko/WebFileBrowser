@@ -154,6 +154,7 @@ public class BrowseController : Controller
         });
     }
 
+    [ResponseCache(CacheProfileName = "Media")]
     public IActionResult Image(string share, string path)
     {
         var imagePath = Path.Join(_shareService.GetSharePath(share), path);
