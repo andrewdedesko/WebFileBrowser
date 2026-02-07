@@ -54,7 +54,7 @@
                     <a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path, view = dir.ViewType})">
                     <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path})" loading="lazy">
                     <div class="card-body">
-                        <h5 class="card-title">@dir.Name</h5>
+                        <span class="card-title" title="@dir.Name">@dir.Name</span>
                     </div>
                     </a>
                 </div>
@@ -76,7 +76,7 @@
                             <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
                                 loading="lazy">
                             <div class="card-body">
-                                <h5 class="card-title">@file.Name</h5>
+                                <span class="card-title" title="@file.Name">@file.Name</span>
                             </div>
                         </a>
                     }
@@ -87,7 +87,7 @@
                             <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
                                 loading="lazy">
                                 <div class="card-body">
-                                <h5 class="card-title">@file.Name</h5>
+                                <span class="card-title" title="@file.Name">@file.Name</span>
                             </div>
                         </a>
                     }
@@ -120,6 +120,12 @@
             text-align: center;
 
             background-color: #15181a;
+        }
+
+        .content-container .item a{
+            color: #f0f0f0;
+            text-decoration: none;
+            display: block;
         }
 
         .content-container .item img{
