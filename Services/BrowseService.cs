@@ -3,7 +3,7 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace WebFileBrowser.Services;
 
-class BrowseService : IBrowseService, IFileTypeService
+public class BrowseService : IBrowseService, IFileTypeService
 {
     private readonly IShareService _shareService;
 

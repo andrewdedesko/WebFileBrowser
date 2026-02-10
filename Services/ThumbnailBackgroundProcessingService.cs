@@ -15,15 +15,14 @@ public class ThumbnailBackgroundProcessingService : BackgroundService {
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         while(!stoppingToken.IsCancellationRequested) {
-            var path = await _queue.DequeueAsync(stoppingToken);
-            _logger.LogTrace($"Processing thumbnail for {path}");
+            var t = await _queue.DequeueAsync(stoppingToken);
+            _logger.LogTrace($"Processing thumbnail for {t.Share}:{t.Path}");
             try {
-                if(Directory.Exists(path)) {
-                    var data = _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(path);
-                    if(data != null) {
-                        await _imageThumbnailService.SetThumbnailCacheAsync(path, data);
-                    }
-                }
+                    // var data = _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(path);
+                    // if(data != null) {
+                    //     await _imageThumbnailService.SetThumbnailCacheAsync(path, data);
+                    // }
+                await _imageThumbnailService.GetImageThumbnail(t.Share, t.Path);
             } catch(Exception e) {
                 continue;
             }

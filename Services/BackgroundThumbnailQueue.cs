@@ -1,9 +1,10 @@
 using System.Threading.Channels;
+using WebFileBrowser.Models;
 
 namespace WebFileBrowser.Services;
 
 public class BackgroundThumbnailQueue {
-    private readonly Channel<string> _queue;
+    private readonly Channel<ThumbnailTask> _queue;
 
     public BackgroundThumbnailQueue(int capacity) {
         // Capacity should be set based on the expected application load and
@@ -14,10 +15,10 @@ public class BackgroundThumbnailQueue {
         var options = new BoundedChannelOptions(capacity) {
             FullMode = BoundedChannelFullMode.Wait
         };
-        _queue = Channel.CreateBounded<string>(options);
+        _queue = Channel.CreateBounded<ThumbnailTask>(options);
     }
 
-    public async ValueTask EnqueueAsync(string path) {
+    public async ValueTask EnqueueAsync(ThumbnailTask path) {
         if(path == null) {
             throw new ArgumentNullException(nameof(path));
         }
@@ -25,7 +26,7 @@ public class BackgroundThumbnailQueue {
         await _queue.Writer.WriteAsync(path);
     }
 
-    public async ValueTask<string> DequeueAsync(CancellationToken cancellationToken) {
+    public async ValueTask<ThumbnailTask> DequeueAsync(CancellationToken cancellationToken) {
         var path = await _queue.Reader.ReadAsync(cancellationToken);
         return path;
     }
