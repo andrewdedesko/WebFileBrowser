@@ -77,14 +77,17 @@
     </div>
 </div>
 
+@if(Model.Files.Any(f => f.IsImage)){
 <div class="row">
     <div class="column">
+        <section>
         <div class="content-container">
             @foreach (var file in Model.Files)
             {
-                <article class="item">
+                
                     @if (file.IsImage)
                     {
+                            <article class="item">
                         <a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share"
                                 asp-route-path="@Model.Path" asp-route-image="@file.Name" class="item-link">
                             <figure>
@@ -95,34 +98,56 @@
                                 <span title="@file.Name">@file.Name</span>
                             </footer>
                         </a>
+                            </article>
                     }
-                    else if (file.IsVideo)
-                    {
-                        <a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
-                                asp-route-path="@file.Path" class="item-link">
-                            <figure>
-                                <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
-                                        loading="lazy" />
-                            </figure>
-                            <footer>
-                                <span title="@file.Name">@file.Name</span>
-                            </footer>
-                        </a>
-                    }
-                    else
-                    {
-                        <footer>
-                            <span title="@file.Name">@file.Name</span>
-                        </footer>
-                    }
-                </article>
             }
         </div>
+                                </section>
     </div>
 </div>
+}
+
+@if(Model.Files.Any(f => f.IsVideo)){
+    <div class="row">
+        <div class="column">
+            <section>
+            <h2>Videos</h2>
+            <div class="content-container">
+                @foreach (var file in Model.Files)
+                {
+                    
+                    @if (file.IsVideo)
+                    {
+                        <article class="item">
+                            <a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
+                                   asp-route-path="@file.Path" class="item-link">
+                                <figure>
+                                    <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
+                                         loading="lazy" />
+                                </figure>
+                                <footer>
+                                    <span title="@file.Name">@file.Name</span>
+                                </footer>
+                            </a>
+                        </article>
+                    }
+                }
+            </div>
+                                </section>
+        </div>
+    </div>
+    }
 
 @section Styles {
     <style>
+        section{
+            margin-bottom: 60px;
+        }
+
+        section h2{
+            padding-bottom: 20px;
+        }
+
         .content-container {
             display: grid;
         }
