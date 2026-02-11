@@ -23,7 +23,8 @@ public class ThumbnailBackgroundProcessingService : BackgroundService {
                     //     await _imageThumbnailService.SetThumbnailCacheAsync(path, data);
                     // }
                 await _imageThumbnailService.GetImageThumbnail(t.Share, t.Path);
-            } catch(Exception e) {
+            } catch(Exception ex) {
+                _logger.LogError($"Failed to generate thumbnail for {t.Share}:{t.Path}", ex);
                 continue;
             }
         }
