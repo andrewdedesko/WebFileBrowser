@@ -13,8 +13,8 @@ builder.Services.AddSingleton<DefaultViews>();
 
 builder.Services.AddSingleton<IUserAuthenticationService, UserAuthenticationService>();
 builder.Services.AddSingleton<IShareService, ShareService>();
-builder.Services.AddSingleton<IBrowseService, BrowseService>();
-builder.Services.AddSingleton<IFileTypeService, BrowseService>();
+builder.Services.AddSingleton<IBrowseService, FileSystemBrowseService>();
+builder.Services.AddSingleton<IFileTypeService, FileSystemBrowseService>();
 
 builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
     return new BackgroundThumbnailQueue(1000);

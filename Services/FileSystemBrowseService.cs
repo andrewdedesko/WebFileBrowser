@@ -3,7 +3,7 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace WebFileBrowser.Services;
 
-public class BrowseService : IBrowseService, IFileTypeService
+public class FileSystemBrowseService : IBrowseService, IFileTypeService
 {
     private readonly IShareService _shareService;
 
@@ -16,7 +16,7 @@ public class BrowseService : IBrowseService, IFileTypeService
         ".mp4", ".m4v", ".webm"
     };
 
-    public BrowseService(IShareService shareService)
+    public FileSystemBrowseService(IShareService shareService)
     {
         _shareService = shareService;
     }
