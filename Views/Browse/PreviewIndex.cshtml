@@ -7,32 +7,41 @@
     <div class="column">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                @foreach(var c in Model.PathComponents){
-                    @if(Model.Path != c.Path){
-                        <li class="breadcrumb-item"><a asp-controller="Browse" asp-route-share="@Model.Share" asp-route-path="@c.Path">@c.Name</a></li>
-                    }else{
-                        <li class="breadcrumb-item active">@c.Name</li>
+                @foreach (var c in Model.PathComponents)
+                {
+                    @if (Model.Path != c.Path)
+                    {
+                        <li class="breadcrumb-item"><a asp-controller="Browse" asp-route-share="@Model.Share"
+                                                           asp-route-path="@c.Path">@c.Name</a></li>
+                        }else
+                        {
+                            <li class="breadcrumb-item active">@c.Name</li>
+                        }
                     }
-                }
-            </ol>
-        </nav>
+                </ol>
+            </nav>
+        </div>
     </div>
-</div>
 
 <div class="row" style="margin-bottom: 20px;">
     <div class="column">
         <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-            @if(Model.ViewType == "List"){
-                <a role="buttpn"
-                    class="btn btn-sm btn-success" href="#" onclick="return false;">List</a>
-            }else{
-                <a role="button" class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", "Browse", new{share = Model.Share, path = Model.Path, view = "List"})">List</a>
+            @if (Model.ViewType == "List")
+            {
+                <a role="buttpn" class="btn btn-sm btn-success" href="#" onclick="return false;">List</a>
             }
-            
-            @if(Model.ViewType == "Thumbnails"){
-                <a role="button" class="btn btn-sm btn-success"
-                    href="#" onclick="return false;">Thumbnails</a>
-            }else{
+            else
+            {
+                <a role="button" class="btn btn-sm btn-outline-secondary"
+                    href="@Url.Action("Index", "Browse", new{share = Model.Share, path = Model.Path, view = "List"})">List</a>
+            }
+
+            @if (Model.ViewType == "Thumbnails")
+            {
+                <a role="button" class="btn btn-sm btn-success" href="#" onclick="return false;">Thumbnails</a>
+            }
+            else
+            {
                 <a role="button" class="btn btn-sm btn-outline-secondary"
                     href="@Url.Action("Index", "Browse", new { share = Model.Share, path = Model.Path, view = "Thumbnails" })">Thumbnails</a>
             }
@@ -49,11 +58,14 @@
 <div class="row">
     <div class="column">
         <div class="content-container">
-            @foreach(var dir in Model.Directories){
+            @foreach (var dir in Model.Directories)
+            {
                 <article class="item">
-                    <a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path, view = dir.ViewType})" class="item-link">
+                    <a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path, view = dir.ViewType})"
+                            class="item-link">
                         <figure>
-                            <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path})" loading="lazy" />
+                            <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path})"
+                                    loading="lazy" />
                         </figure>
                         <footer>
                             <span>@dir.Name</span>
@@ -74,11 +86,11 @@
                     @if (file.IsImage)
                     {
                         <a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share"
-                                           asp-route-path="@Model.Path" asp-route-image="@file.Name" class="item-link">
-                                <figure>
-                            <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
-                                loading="lazy" />
-                                                </figure>
+                                asp-route-path="@Model.Path" asp-route-image="@file.Name" class="item-link">
+                            <figure>
+                                <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
+                                        loading="lazy" />
+                            </figure>
                             <footer>
                                 <span title="@file.Name">@file.Name</span>
                             </footer>
@@ -87,21 +99,21 @@
                     else if (file.IsVideo)
                     {
                         <a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
-                                           asp-route-path="@file.Path" class="item-link">
-                                <figure>
-                            <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
-                                loading="lazy" />
-                                        </figure>
-                                        <footer>
-                                            <span title="@file.Name">@file.Name</span>
-                                        </footer>
+                                asp-route-path="@file.Path" class="item-link">
+                            <figure>
+                                <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
+                                        loading="lazy" />
+                            </figure>
+                            <footer>
+                                <span title="@file.Name">@file.Name</span>
+                            </footer>
                         </a>
                     }
                     else
                     {
-                                    <footer>
-                                        <span title="@file.Name">@file.Name</span>
-                                    </footer>
+                        <footer>
+                            <span title="@file.Name">@file.Name</span>
+                        </footer>
                     }
                 </article>
             }
@@ -109,32 +121,18 @@
     </div>
 </div>
 
-@section Styles{
+@section Styles {
     <style>
-        .content-container{
-            @* display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 20px; *@
-
+        .content-container {
             display: grid;
-            
-            @* container-type: inline-size;
-            container-type: inline-size; *@
         }
 
-        .content-container .item{
-            @* margin: 10px; *@
+        .content-container .item {
             text-align: center;
-            @* flex: 1; *@
-            @* float: left; *@
-
             background-color: #15181a;
-            @* border: 1px solid #292f33; *@
         }
 
-        .content-container .item a.item-link{
+        .content-container .item a.item-link {
             color: #f0f0f0;
             text-decoration: none;
             display: block;
@@ -145,25 +143,18 @@
         }
 
         .content-container .item footer {
-            @* background: #252525; *@
-            @* color: white; *@
             padding: 14px 14px;
             letter-spacing: 1px;
             margin: 0;
         }
 
-        .content-container .item img{
+        .content-container .item img {
             object-fit: contain;
             image-orientation: none;
             background-color: #0c0e0f;
         }
 
-        .content-container .item .card-body{
-            @* margin-top: 10px;
-            margin-bottom: 10px; *@
-        }
-
-        .content-container .item{
+        .content-container .item {
             width: 160px;
         }
 
@@ -172,25 +163,25 @@
             height: 160px;
         }
 
-        .content-container{
+        .content-container {
             grid-template-columns: repeat(auto-fit, 160px);
             grid-gap: 15px;
         }
 
-        @@media only screen and (min-width: 1081px){
-            .content-container{
+        @@media only screen and (min-width: 1081px) {
+            .content-container {
                 grid-template-columns: repeat(auto-fit, 240px);
                 grid-gap: 20px;
             }
 
-            .content-container .item img{
+            .content-container .item img {
                 width: 240px;
                 height: 240px;
             }
 
-            .content-container .item{
+            .content-container .item {
                 width: 240px;
             }
         }
     </style>
-} 
+}
