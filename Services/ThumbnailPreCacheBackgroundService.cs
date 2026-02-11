@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Caching.Distributed;
 using WebFileBrowser.Configuration;
 
 namespace WebFileBrowser.Services;
@@ -8,17 +9,24 @@ public class ThumbnailPreCacheBackgroundService : BackgroundService {
     private readonly IBrowseService _browseService;
     private readonly DefaultViews _defaultViews;
     private readonly BackgroundThumbnailQueue _backgroundThumbnailQueue;
+    private readonly IDistributedCache _cache;
     private readonly ILogger<ThumbnailPreCacheBackgroundService> _logger;
 
-    public ThumbnailPreCacheBackgroundService(BackgroundThumbnailQueue backgroundThumbnailQueue, DefaultViews defaultViews, IShareService shareService, IBrowseService browseService, ILogger<ThumbnailPreCacheBackgroundService> logger) {
+    public ThumbnailPreCacheBackgroundService(BackgroundThumbnailQueue backgroundThumbnailQueue, DefaultViews defaultViews, IShareService shareService, IBrowseService browseService, ILogger<ThumbnailPreCacheBackgroundService> logger, IDistributedCache cache) {
         _backgroundThumbnailQueue = backgroundThumbnailQueue;
         _defaultViews = defaultViews;
         _shareService = shareService;
         _browseService = browseService;
         _logger = logger;
+        _cache = cache;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+        var precached = _cache.GetString("ThumbnailPrecaching:Complete");
+        if(precached == "true") {
+            return;
+        }
+
         foreach(var share in _shareService.GetShareNames()) {
             _logger.LogInformation($"Pre-caching thumbnails for share {share}");
 
@@ -32,6 +40,8 @@ public class ThumbnailPreCacheBackgroundService : BackgroundService {
                 break;
             }
         }
+
+        _cache.SetString("ThumbnailPrecaching:Complete", "true");
     }
 
     private async Task PreCacheShareThumbnails(CancellationToken cancellationToken, string share) {
