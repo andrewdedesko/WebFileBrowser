@@ -190,13 +190,29 @@
 
         .content-container {
             grid-template-columns: repeat(auto-fit, 160px);
-            grid-gap: 15px;
+            grid-gap: 17px;
         }
 
         @@media only screen and (min-width: 1081px) {
             .content-container {
                 grid-template-columns: repeat(auto-fit, 240px);
-                grid-gap: 20px;
+                grid-gap: 24px;
+            }
+
+            .content-container .item img {
+                width: 240px;
+                height: 240px;
+            }
+
+            .content-container .item {
+                width: 240px;
+            }
+        }
+
+        @@media only screen and (min-width: 992px) {
+            .content-container {
+                grid-template-columns: repeat(auto-fit, 240px);
+                grid-gap: 17px;
             }
 
             .content-container .item img {
