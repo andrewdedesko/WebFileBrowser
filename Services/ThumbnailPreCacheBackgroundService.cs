@@ -12,6 +12,8 @@ public class ThumbnailPreCacheBackgroundService : BackgroundService {
     private readonly IDistributedCache _cache;
     private readonly ILogger<ThumbnailPreCacheBackgroundService> _logger;
 
+    private volatile bool _performingPreCaching = false;
+
     public ThumbnailPreCacheBackgroundService(BackgroundThumbnailQueue backgroundThumbnailQueue, DefaultViews defaultViews, IShareService shareService, IBrowseService browseService, ILogger<ThumbnailPreCacheBackgroundService> logger, IDistributedCache cache) {
         _backgroundThumbnailQueue = backgroundThumbnailQueue;
         _defaultViews = defaultViews;
@@ -21,27 +23,35 @@ public class ThumbnailPreCacheBackgroundService : BackgroundService {
         _cache = cache;
     }
 
+    public bool IsPreCacheRunning() =>
+        _performingPreCaching;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         var precached = _cache.GetString("ThumbnailPrecaching:Complete");
         if(precached == "true") {
             return;
         }
 
-        foreach(var share in _shareService.GetShareNames()) {
-            _logger.LogInformation($"Pre-caching thumbnails for share {share}");
+        _performingPreCaching = true;
+        try {
+            foreach(var share in _shareService.GetShareNames()) {
+                _logger.LogInformation($"Pre-caching thumbnails for share {share}");
 
-            try{
-                await PreCacheShareThumbnails(stoppingToken, share);
-            }catch(Exception ex) {
-                _logger.LogError($"An error occurred while pre caching thumbnails for share {share}", ex);
+                try {
+                    await PreCacheShareThumbnails(stoppingToken, share);
+                } catch(Exception ex) {
+                    _logger.LogError($"An error occurred while pre caching thumbnails for share {share}", ex);
+                }
+
+                if(stoppingToken.IsCancellationRequested) {
+                    break;
+                }
             }
 
-            if(stoppingToken.IsCancellationRequested) {
-                break;
-            }
+            _cache.SetString("ThumbnailPrecaching:Complete", "true");
+        } finally {
+            _performingPreCaching = false;
         }
-
-        _cache.SetString("ThumbnailPrecaching:Complete", "true");
     }
 
     private async Task PreCacheShareThumbnails(CancellationToken cancellationToken, string share) {

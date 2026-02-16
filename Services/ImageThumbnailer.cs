@@ -16,16 +16,16 @@ public class ImageThumbnailer {
         _fileTypeService = fileTypeService;
     }
 
-    public byte[]? GetThumbnailImage(string share, string path) {
+    public byte[] GetThumbnailImage(string share, string path, int size) {
         var customThumbnailPath = _findCustomThumbnailFile(share, path);
         if(!string.IsNullOrEmpty(customThumbnailPath)) {
             using(var srcImage = Image.Load<Rgb24>(customThumbnailPath)) {
-                ScaleImageToThumbnail(srcImage);
+                ScaleImageToThumbnail(srcImage, size);
                 return GetImageAsBytes(srcImage);
             }
         }
 
-        return GetThumbnailImageFromMiddleImage(share, path);
+        return GetThumbnailImageFromMiddleImage(share, path, size);
     }
 
     private string? _findCustomThumbnailFile(string share, string path) {
@@ -45,7 +45,7 @@ public class ImageThumbnailer {
         return null;
     }
 
-    private byte[]? GetThumbnailImageFromMiddleImage(string share, string path) {
+    private byte[] GetThumbnailImageFromMiddleImage(string share, string path, int size) {
         string? thumbnailFilePath = null;
         var attr = System.IO.File.GetAttributes(Path.Join(_shareService.GetSharePath(share), path));
         if(true || attr.HasFlag(FileAttributes.Directory)) {
@@ -73,16 +73,16 @@ public class ImageThumbnailer {
         }
 
         if(thumbnailFilePath == null) {
-            return null;
+            throw new ThumbnailNotAvailableException();
         }
 
         using(var srcImage = Image.Load<Rgb24>(thumbnailFilePath)) {
-            ScaleImageToThumbnail(srcImage);
+            ScaleImageToThumbnail(srcImage, size);
             return GetImageAsBytes(srcImage);
         }
     }
 
-    public byte[]? GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(string directoryPath) {
+    public byte[]? GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(string directoryPath, int size) {
         if(!Directory.Exists(directoryPath)) {
             throw new Exception($"{directoryPath} is not a directory");
         }
@@ -141,7 +141,7 @@ public class ImageThumbnailer {
                             //     srcImage.Mutate(i => i.Fill(Color.Red, rectangle));
                             // }
 
-                            ScaleImageToThumbnail(srcImage);
+                            ScaleImageToThumbnail(srcImage, size);
                             // var star = new SixLabors.ImageSharp.Drawing.Star(x: 25.0f, y: 25.0f, prongs: 5, innerRadii: 10.0f, outerRadii: 15.0f);
                             // srcImage.Mutate(x => x.Fill(Color.RebeccaPurple, star));
 
@@ -162,7 +162,7 @@ public class ImageThumbnailer {
 
         if(firstImage != null) {
             using(var srcImage = Image.Load<Rgb24>(firstImage)) {
-                ScaleImageToThumbnail(srcImage);
+                ScaleImageToThumbnail(srcImage, size);
                 return GetImageAsBytes(srcImage);
             }
         }
@@ -170,7 +170,7 @@ public class ImageThumbnailer {
         return null;
     }
 
-    public byte[] GetImageFileThumbnailImage(string share, string path) {
+    public byte[] GetImageFileThumbnailImage(string share, string path, int size) {
         var imagePath = _shareService.GetPath(share, path);
 
         if(!File.Exists(_shareService.GetPath(share, path))) {
@@ -182,7 +182,7 @@ public class ImageThumbnailer {
         }
 
         using(var srcImage = Image.Load<Rgb24>(imagePath)) {
-            ScaleImageToThumbnail(srcImage);
+            ScaleImageToThumbnail(srcImage, size);
             return GetImageAsBytes(srcImage);
         }
     }
@@ -210,17 +210,15 @@ public class ImageThumbnailer {
         return thumbnailData;
     }
 
-    public void ScaleImageToThumbnail(Image image) {
+    public void ScaleImageToThumbnail(Image image, int size) {
         var width = 0;
         var height = 0;
 
         if(image.Width > image.Height) {
-            width = 240;
+            width = size;
         } else {
-            height = 240;
+            height = size;
         }
         image.Mutate(x => x.Resize(width, height));
     }
-
-    
 }

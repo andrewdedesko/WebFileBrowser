@@ -10,14 +10,14 @@ public class VideoThumbnailer {
         _imageThumbnailer = imageThumbnailer;
     }
 
-    public byte[]? GetVideoThumbnail(string path) {
+    public byte[]? GetVideoThumbnail(string path, int size) {
         var thumbnailPath = FindVideoThumbnailPath(path);
         if(thumbnailPath == null) {
             return null;
         }
 
         using(var srcImage = Image.Load<Rgb24>(thumbnailPath)) {
-            _imageThumbnailer.ScaleImageToThumbnail(srcImage);
+            _imageThumbnailer.ScaleImageToThumbnail(srcImage, size);
             return _imageThumbnailer.GetImageAsBytes(srcImage);
         }
     }

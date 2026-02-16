@@ -191,10 +191,14 @@ public class BrowseController : Controller
     }
 
     [ResponseCache(CacheProfileName = "Media")]
-    public async Task<IActionResult> Thumbnail(string share, string path)
+    public async Task<IActionResult> Thumbnail(string share, string path, int size = 240)
     {
-        var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path);
-        return File(thumbnail, _imageThumbnailService.GetThumbnailImageMimeType());
+        try{
+            var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path, size);
+            return File(thumbnail, _imageThumbnailService.GetThumbnailImageMimeType());
+        } catch(ThumbnailNotAvailableException) {
+            return NotFound();
+        }
     }
 
     public async Task<IActionResult> FlushThumbnail(string share, string path) {

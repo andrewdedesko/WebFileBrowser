@@ -23,7 +23,8 @@ builder.Services.AddSingleton<ImageThumbnailer>();
 builder.Services.AddSingleton<VideoThumbnailer>();
 builder.Services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
 builder.Services.AddHostedService<ThumbnailBackgroundProcessingService>();
-builder.Services.AddHostedService<ThumbnailPreCacheBackgroundService>();
+builder.Services.AddSingleton<ThumbnailPreCacheBackgroundService>();
+builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailPreCacheBackgroundService>());
 
 var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
 if(cacheType == "redis") {
