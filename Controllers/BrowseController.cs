@@ -155,10 +155,14 @@ public class BrowseController : Controller
     }
 
     [ResponseCache(CacheProfileName = "Media")]
+    [AllowAnonymous]
     public IActionResult Image(string share, string path)
     {
+        if(User == null || User.Identity == null || !User.Identity.IsAuthenticated){
+            return StatusCode(401);
+        }
+
         var imagePath = Path.Join(_shareService.GetSharePath(share), path);
-        
         
         var image = System.IO.File.OpenRead(imagePath);
         string mimeType;

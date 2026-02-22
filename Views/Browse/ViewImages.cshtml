@@ -35,6 +35,7 @@
     <script>
         const images = @Json.Serialize(Model.Files.Select(f => new{url = Url.Action("Image", "Browse", new {share = f.Share, path = f.Path}), name = f.Name})) ;
         const startingImageName = @Json.Serialize(Model.StartingImageName) ;
+        const applicationLoginUrl = @Json.Serialize(Url.ActionLink("Login", "Account"));
         let currentImage = null;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -68,7 +69,8 @@
                 previousImage();
             });
 
-            document.getElementsByClassName("main-image-container")[0].addEventListener("click", (ev) => {
+            const imageContainer = document.getElementsByClassName("main-image-container")[0];
+            imageContainer.addEventListener("click", (ev) => {
                 ev.preventDefault();
                 const rectangle = ev.target.getBoundingClientRect();
                 const clickX = ev.clientX - rectangle.x;
@@ -79,6 +81,9 @@
                     nextImage();
                 }
             });
+
+            const mainImage = document.getElementById("image");
+            mainImage.addEventListener("error", handleImageLoadError);
         });
 
         function nextImage(){
@@ -139,6 +144,19 @@
                     img.onerror = () => reject(new Error(`Failed to load image: ${image}`));
                 });
             });
+        }
+
+        async function handleImageLoadError(ev){
+            const imageSrc = ev.target.src;
+            console.log(`Error loading ${imageSrc}`);
+
+            const response = await fetch(imageSrc);
+            if(response.status === 401){
+                const currentUrl = new URL(window.location.href);
+                const loginUrl = new URL(applicationLoginUrl);
+                loginUrl.searchParams.set("ReturnUrl", currentUrl.pathname + currentUrl.search);
+                window.location.href = loginUrl.toString();
+            }
         }
     </script>
 }
