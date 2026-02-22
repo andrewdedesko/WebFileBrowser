@@ -34,6 +34,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         }
 
         DistributedCacheEntryOptions cacheEntryOptions = new();
+        cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromDays(14));
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
@@ -50,7 +51,7 @@ public class ImageThumbnailService : IImageThumbnailService {
 
         } else if(_fileTypeService.IsImage(filePath)) {
             data = _imageThumbnailer.GetImageFileThumbnailImage(share, path, size);
-            cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromHours(1));
+            cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromDays(1));
 
         } else if(_fileTypeService.IsVideo(filePath)) {
             data = _videoThumbnailer.GetVideoThumbnail(filePath, size);
