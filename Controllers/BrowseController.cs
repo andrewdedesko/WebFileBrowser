@@ -159,7 +159,7 @@ public class BrowseController : Controller
     public IActionResult Image(string share, string path)
     {
         if(User == null || User.Identity == null || !User.Identity.IsAuthenticated){
-            return StatusCode(401);
+            return Unauthorized();
         }
 
         var imagePath = Path.Join(_shareService.GetSharePath(share), path);
