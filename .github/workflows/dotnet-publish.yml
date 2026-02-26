@@ -56,5 +56,5 @@ jobs:
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_NAME }} \
-            -p:ContainerImageTags="${{ steps.meta.outputs.tag-names }}"
+            -p:ContainerImageTags="${{ env.DOCKER_METADATA_OUTPUT_TAG_NAMES }}"
         # If your app is not at the repo root, add: --project path/to/YourApp.csproj
