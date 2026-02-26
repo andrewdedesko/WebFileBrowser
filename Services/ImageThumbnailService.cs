@@ -31,10 +31,12 @@ public class ImageThumbnailService : IImageThumbnailService {
         _directoryThumbnailer = directoryThumbnailer;
     }
 
-    public async Task<byte[]> GetImageThumbnail(string share, string path, int size = 240) {
-        byte[]? cachedThumbnail = await FindCachedThumbnailAsync(share, path, size);
-        if(cachedThumbnail != null) {
-            return cachedThumbnail;
+    public async Task<byte[]> GetImageThumbnail(string share, string path, int size = 240, bool useCache = true) {
+        if(useCache){
+            byte[]? cachedThumbnail = await FindCachedThumbnailAsync(share, path, size);
+            if(cachedThumbnail != null) {
+                return cachedThumbnail;
+            }
         }
 
         DistributedCacheEntryOptions cacheEntryOptions = new();
@@ -68,7 +70,10 @@ public class ImageThumbnailService : IImageThumbnailService {
             throw new ThumbnailNotAvailableException($"Could not get a thumbnail for share: {share}, path: {path}");
         }
 
-        await SetThumbnailCacheAsync(share, path, size, data);
+        if(useCache){
+            await SetThumbnailCacheAsync(share, path, size, data);
+        }
+        
         return data;
     }
 
