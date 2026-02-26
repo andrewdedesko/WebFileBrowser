@@ -48,7 +48,9 @@ public class ThumbnailPreCacheBackgroundService : BackgroundService {
                 }
             }
 
-            _cache.SetString("ThumbnailPrecaching:Complete", "true");
+            var jobCompleteCacheEntryOptions = new DistributedCacheEntryOptions();
+            jobCompleteCacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromDays(7));
+            _cache.SetString("ThumbnailPrecaching:Complete", "true", jobCompleteCacheEntryOptions);
         } finally {
             _performingPreCaching = false;
         }
