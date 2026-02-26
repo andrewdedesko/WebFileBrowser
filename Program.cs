@@ -13,7 +13,8 @@ builder.Services.AddSingleton<DefaultViews>();
 
 builder.Services.AddSingleton<IUserAuthenticationService, UserAuthenticationService>();
 builder.Services.AddSingleton<IShareService, ShareService>();
-builder.Services.AddSingleton<IBrowseService, FileSystemBrowseService>();
+builder.Services.AddSingleton<FileSystemBrowseService>();
+builder.Services.AddSingleton<IBrowseService>(ctx => ctx.GetRequiredService<FileSystemBrowseService>());
 builder.Services.AddSingleton<IFileTypeService, FileTypeService>();
 
 builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
@@ -25,8 +26,6 @@ builder.Services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
 builder.Services.AddHostedService<ThumbnailBackgroundProcessingService>();
 // builder.Services.AddSingleton<ThumbnailPreCacheBackgroundService>();
 // builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailPreCacheBackgroundService>());
-
-// builder.Services.AddHostedService<InMemoryTreeBrowseService>();
 
 var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
 if(cacheType == "redis") {
