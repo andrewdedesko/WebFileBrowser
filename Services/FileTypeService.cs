@@ -1,3 +1,5 @@
+using WebFileBrowser.Models;
+
 namespace WebFileBrowser.Services;
 
 public class FileTypeService : IFileTypeService {
@@ -27,6 +29,9 @@ public class FileTypeService : IFileTypeService {
 
     public bool IsDirectory(string path) =>
         Directory.Exists(path);
+
+    public bool IsImage(string share, string path) =>
+        IsImage(path);
 
     public bool IsImage(string path) {
         var extension = Path.GetExtension(path).ToLower();
@@ -58,4 +63,14 @@ public class FileTypeService : IFileTypeService {
 
     public bool IsHidden(string path) =>
         Path.GetFileName(path).StartsWith(".");
+
+    public ShareFileType GetFileType(string share, string path) {
+        if(IsImage(path)) {
+            return ShareFileType.Image;
+        } else if(IsVideo(path)) {
+            return ShareFileType.Video;
+        }
+
+        return ShareFileType.Other;
+    }
 }

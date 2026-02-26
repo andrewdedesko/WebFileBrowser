@@ -27,4 +27,13 @@ public class FileSystemBrowseService : IBrowseService {
             .Select(p => Path.GetRelativePath(sharePath, p))
             .AsEnumerable();
     }
+
+    public bool IsDirectory(string share, string path) =>
+        Directory.Exists(_shareService.GetPath(share, path));
+
+    public bool IsFile(string share, string path) =>
+        File.Exists(_shareService.GetPath(share, path));
+
+    public bool Exists(string share, string path) =>
+        IsDirectory(share, path) || IsFile(share, path);
 }
