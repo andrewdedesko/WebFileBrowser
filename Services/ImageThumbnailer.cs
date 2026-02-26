@@ -333,7 +333,7 @@ public class ImageThumbnailer {
         var det = FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
         var eyeDet = FaceAiSharpBundleFactory.CreateEyeStateDetector();
 
-        double minimumEdgeDistanceFactor = (double)1 / 8;
+        double minimumEdgeDistanceFactor = (double)1 / 15;
         var minimumEdgeDistance = Math.Min(srcImage.Width, srcImage.Height) * minimumEdgeDistanceFactor;
         var faces = det.DetectFaces(srcImage)
             .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
