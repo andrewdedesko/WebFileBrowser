@@ -1,6 +1,12 @@
 @model BrowseDirectoryViewModel
 @{
     ViewData["Title"] = Model.Name;
+
+    int previewCardSize = (int)ViewData["PreviewGridCardSize"];
+    int previewGridWidth = 1296;
+
+    int cardsPerRow = (int)Math.Floor((double)previewGridWidth / (double)previewCardSize);
+    int previewGridSpacing = (int)Math.Floor((double)(previewGridWidth - (previewCardSize * cardsPerRow)) / (cardsPerRow - 1));
 }
 
 <div class="row">
@@ -57,23 +63,25 @@
 
 <div class="row">
     <div class="column">
-        <div class="content-container">
-            @foreach (var dir in Model.Directories)
-            {
-                <article class="item">
-                    <a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path, view = dir.ViewType})"
-                            class="item-link">
-                        <figure>
-                            <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path})"
-                                    loading="lazy" />
-                        </figure>
-                        <footer>
-                            <span>@dir.Name</span>
-                        </footer>
-                    </a>
-                </article>
-            }
-        </div>
+        <section>
+            <div class="content-container">
+                @foreach (var dir in Model.Directories)
+                {
+                    <article class="item">
+                        <a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path, view = dir.ViewType})"
+                                class="item-link">
+                            <figure>
+                                <img src="@Url.Action("Thumbnail", "Browse", new {share = dir.Share, path = dir.Path, size = previewCardSize})"
+                                        loading="lazy" />
+                            </figure>
+                            <footer>
+                                <span title="@dir.Name">@dir.Name</span>
+                            </footer>
+                        </a>
+                    </article>
+                }
+            </div>
+        </section>
     </div>
 </div>
 
@@ -91,7 +99,7 @@
                         <a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share"
                                 asp-route-path="@Model.Path" asp-route-image="@file.Name" class="item-link">
                             <figure>
-                                <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
+                                <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path, size = previewCardSize })" title="@file.Name"
                                         loading="lazy" />
                             </figure>
                         </a>
@@ -119,7 +127,7 @@
                             <a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
                                    asp-route-path="@file.Path" class="item-link">
                                 <figure>
-                                    <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path })"
+                                                        <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path, size = previewCardSize })"
                                          loading="lazy" />
                                 </figure>
                                 <footer>
@@ -168,6 +176,10 @@
             padding: 14px 14px;
             letter-spacing: 1px;
             margin: 0;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .content-container .item img {
@@ -176,7 +188,7 @@
             background-color: #0c0e0f;
         }
 
-        .content-container .item {
+        @* .content-container .item {
             width: 160px;
         }
 
@@ -188,35 +200,51 @@
         .content-container {
             grid-template-columns: repeat(auto-fit, 160px);
             grid-gap: 14px;
+        } *@
+
+        @* @@media only screen and (min-width: 576px){
+            .content-container{
+                .grid-gap: 17px;
+            }
+        } *@
+
+                            .content-container {
+                            grid-template-columns: repeat(auto-fit, @(previewCardSize)px);
+                            @* grid-gap: 17px; *@
+                            grid-gap: @(previewGridSpacing)px;
+                            }
+
+                            .content-container .item img {
+                            width: @(previewCardSize)px;
+                            height: @(previewCardSize)px;
+                            }
+
+                            .content-container .item {
+                            width: @(previewCardSize)px;
+                            }
+
+        @@media only screen and (min-width: 992px) {
+            .content-container {
+                grid-template-columns: repeat(auto-fit, @(previewCardSize)px);
+                @* grid-gap: 17px; *@
+                grid-gap: @(previewGridSpacing)px;
+            }
+
+            .content-container .item img {
+                width: @(previewCardSize)px;
+                height: @(previewCardSize)px;
+            }
+
+            .content-container .item {
+                width: @(previewCardSize)px;
+            }
         }
 
-        @@media only screen and (min-width: 1081px) {
+        @* @@media only screen and (min-width: 1081px) {
             .content-container {
                 grid-template-columns: repeat(auto-fit, 240px);
                 grid-gap: 24px;
             }
-        }
-
-        @@media only screen and (min-width: 992px) {
-            .content-container {
-                grid-template-columns: repeat(auto-fit, 240px);
-                grid-gap: 17px;
-            }
-
-            .content-container .item img {
-                width: 240px;
-                height: 240px;
-            }
-
-            .content-container .item {
-                width: 240px;
-            }
-        }
-
-        @@media only screen and (min-width: 576px){
-            .content-container{
-                .grid-gap: 17px;
-            }
-        }
+        } *@
     </style>
 }

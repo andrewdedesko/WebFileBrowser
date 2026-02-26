@@ -53,7 +53,7 @@ public class BrowseController : Controller
         });
     }
 
-    public IActionResult Index(string share, string path, string? view)
+    public IActionResult Index(string share, string path, string? view, int? size)
     {
         var directories = _browseService.GetDirectories(share, path);
 
@@ -113,6 +113,16 @@ public class BrowseController : Controller
         } else if (view?.ToLower() == "thumbnails") {
             viewName = "PreviewIndex";
         }
+
+        int gridSize;
+        if(size != null) {
+            gridSize = size.Value;
+        }else if(!directories.Any()) {
+            gridSize = 310;
+        } else {
+            gridSize = 240;
+        }
+        ViewData["PreviewGridCardSize"] = gridSize;
         return View(viewName, new BrowseDirectoryViewModel()
         {
             Name = Path.GetFileName(dirPath),
