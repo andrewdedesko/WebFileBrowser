@@ -39,7 +39,8 @@
             else
             {
                 <a role="button" class="btn btn-sm btn-outline-secondary"
-                    href="@Url.Action("Index", "Browse", new{share = Model.Share, path = Model.Path, view = "List"})">List</a>
+                       href="@Url.Action("Index", "Browse", new{share = Model.Share, path = Model.Path, view = "List"})"
+                       data-no-history>List</a>
             }
 
             @if (Model.ViewType == "Thumbnails")
@@ -49,7 +50,8 @@
             else
             {
                 <a role="button" class="btn btn-sm btn-outline-secondary"
-                    href="@Url.Action("Index", "Browse", new { share = Model.Share, path = Model.Path, view = "Thumbnails" })">Thumbnails</a>
+                       href="@Url.Action("Index", "Browse", new { share = Model.Share, path = Model.Path, view = "Thumbnails" })"
+                       data-no-history>Thumbnails</a>
             }
         </div>
 
