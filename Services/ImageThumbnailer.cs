@@ -362,43 +362,55 @@ public class ImageThumbnailer {
 
         // Crop to square around face
         if(faces.Any()) {
-            var face = faces.First();
-            int faceMargin = (int)Math.Floor(face.Box.Width * face.Box.Height * 0.1);
-            faceMargin = 0;
-            int srcFaceLeft = (int)Math.Floor((face.Box.Left + srcWidth / 8)) - faceMargin;
-            int srcFaceRight = srcFaceLeft + (int)Math.Floor(face.Box.Width) + faceMargin;
-            int srcFaceTop = (int)Math.Floor((face.Box.Top + srcHeight / 8)) - faceMargin;
-            int srcFaceBottom = srcFaceTop + (int)Math.Floor(face.Box.Height) + faceMargin;
+            var _mostLeftFace = faces.Select(f => f.Box.Left).Order().First();
+            var _mostRightFace = faces.Select(f => f.Box.Right).OrderDescending().First();
+            var _mostTopFace = faces.Select(f => f.Box.Top).Order().First();
+            var _mostBottomFace = faces.Select(f => f.Box.Bottom).OrderDescending().First();
+
+            double imageMarginLower = 0.33;
+            double imageMarginUpper = 0.66;
+            if(faces.Count() > 1) {
+                imageMarginLower = 0.2;
+                imageMarginUpper = 0.8;
+            }
+
+
+            int faceMargin = 0;
+
+            int srcFaceLeft = (int)Math.Floor((_mostLeftFace + srcWidth / 8)) - faceMargin;
+            int srcFaceRight = (int)Math.Floor(_mostRightFace + srcWidth / 8) + faceMargin;
+            int srcFaceTop = (int)Math.Floor((_mostTopFace + srcHeight / 8)) - faceMargin;
+            int srcFaceBottom = (int)Math.Floor(_mostBottomFace + srcHeight / 8) + faceMargin;
+            var srcFaceWidth = srcFaceRight - srcFaceLeft;
+            var srcFaceHeight = srcFaceBottom - srcFaceTop;
 
             var smallestDimension = Math.Min(srcWidth, srcHeight);
 
             var cropLeft = 0;
             if(srcWidth > smallestDimension) {
-                int srcFaceCentre = srcFaceLeft + (int)face.Box.Width / 2;
+                int srcFaceCentre = srcFaceLeft + srcFaceWidth / 2;
                 double srcFaceCentrePercentage = (double)srcFaceCentre / srcWidth;
 
-                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, 0.33, 0.66);
+                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, imageMarginLower, imageMarginUpper);
 
                 int cropFaceCentre = (int)Math.Floor(smallestDimension * srcFaceCentrePercentage);
                 cropLeft = srcFaceCentre - cropFaceCentre;
 
-                if(face.Box.Width < smallestDimension) {
-                    if(cropLeft < 0) {
-                        cropLeft = 0;
-                    }
+                if(cropLeft < 0) {
+                    cropLeft = 0;
+                }
 
-                    if(cropLeft + smallestDimension > srcWidth) {
-                        cropLeft = srcWidth - smallestDimension;
-                    }
+                if(cropLeft + smallestDimension > srcWidth) {
+                    cropLeft = srcWidth - smallestDimension;
                 }
             }
 
             var cropTop = 0;
             if(srcHeight > smallestDimension) {
-                int srcFaceCentre = srcFaceTop + (int)face.Box.Height / 2;
+                int srcFaceCentre = srcFaceTop + srcFaceHeight / 2;
                 double srcFaceCentrePercentage = (double)srcFaceCentre / srcHeight;
 
-                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, 0.33, 0.66);
+                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, imageMarginLower, imageMarginUpper);
 
                 if(annotateImage) {
                     var centreLinePen = Pens.Solid(Color.AliceBlue);
@@ -407,14 +419,12 @@ public class ImageThumbnailer {
 
                 int cropFaceCentre = (int)Math.Floor(smallestDimension * srcFaceCentrePercentage);
                 cropTop = srcFaceCentre - cropFaceCentre;
-                if(face.Box.Height < smallestDimension) {
-                    if(cropTop < 0) {
-                        cropTop = 0;
-                    }
+                if(cropTop < 0) {
+                    cropTop = 0;
+                }
 
-                    if(cropTop + smallestDimension > srcHeight) {
-                        cropTop = srcHeight - smallestDimension;
-                    }
+                if(cropTop + smallestDimension > srcHeight) {
+                    cropTop = srcHeight - smallestDimension;
                 }
             }
 
