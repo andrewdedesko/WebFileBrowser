@@ -11,13 +11,15 @@ public class DirectoryThumbnailer {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
     private readonly IFileTypeService _fileTypeService;
+    private readonly ILogger<DirectoryThumbnailer> _logger;
 
-    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService) {
+    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ILogger<DirectoryThumbnailer> logger) {
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
         _shareService = shareService;
+        _logger = logger;
     }
 
     public byte[]? FindThumbnail(string share, string path, int size) {
@@ -44,7 +46,7 @@ public class DirectoryThumbnailer {
                         return thumbnail;
                     }
                 }catch(Exception ex) {
-                    
+                    _logger.LogWarning(ex, "Unable to get a thumbnail image for {share}:{path}", share, currPath);
                 }
 
             } else if(_browseService.IsDirectory(share, currPath)) {
@@ -52,12 +54,16 @@ public class DirectoryThumbnailer {
                 if(customThumbnailPath != null) {
                     pathQueue.Enqueue(customThumbnailPath);
                 } else {
-                    var files = _browseService.GetFiles(share, currPath);
-                    foreach(var file in files) {
+                    var files = _browseService.GetFiles(share, currPath)
+                        .Order()
+                        .ToArray();
+                    var reorderedFiles = _getElementsMiddleOut(files);
+                    foreach(var file in reorderedFiles) {
                         pathQueue.Enqueue(file);
                     }
 
-                    var directories = _browseService.GetDirectories(share, currPath);
+                    var directories = _browseService.GetDirectories(share, currPath)
+                        .Order();
                     foreach(var directory in directories) {
                         pathQueue.Enqueue(directory);
                     }
@@ -84,6 +90,31 @@ public class DirectoryThumbnailer {
         }
 
         return null;
+    }
+
+    private IEnumerable<string> _getElementsMiddleOut(string[] array) {
+        if(array.Length == 0) {
+            return Array.Empty<string>();
+        }
+
+        List<string> reordered = new();
+        var left = array.Length / 2;
+        var right = array.Length / 2 + 1;
+        while(left >= 0 || right < array.Length) {
+            if(left >= 0) {
+                if(left < array.Length){
+                    reordered.Add(array[left]);
+                }
+                left--;
+            }
+
+            if(right < array.Length) {
+                reordered.Add(array[right]);
+                right++;
+            }
+        }
+
+        return reordered;
     }
 
     private Image<Rgb24>? _loadThumbnailImageForFile(string share, string path) {
