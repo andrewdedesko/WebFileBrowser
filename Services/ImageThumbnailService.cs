@@ -40,7 +40,8 @@ public class ImageThumbnailService : IImageThumbnailService {
         }
 
         DistributedCacheEntryOptions cacheEntryOptions = new();
-        cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromDays(14));
+        var expiration = TimeSpan.FromDays(7) + TimeSpan.FromDays(Random.Shared.Next(0, 7));
+        cacheEntryOptions.SetAbsoluteExpiration(expiration);
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
