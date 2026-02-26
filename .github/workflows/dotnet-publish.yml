@@ -48,14 +48,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Publish and push image with dotnet
-        run: |
-          # Build the tag list
-          TAGS="sha-${GITHUB_SHA::7}"
-          TAGS="${TAGS};${GITHUB_REF_NAME}"
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            TAGS="${TAGS};latest"
-          fi
-          
+        run: |          
           dotnet publish \
             --os linux \
             --arch x64 \
@@ -63,5 +56,5 @@ jobs:
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_NAME }} \
-            -p:ContainerImageTags="\"${TAGS}\""
+            -p:ContainerImageTags="\"${{ steps.meta.outputs.tag-names }}\""
         # If your app is not at the repo root, add: --project path/to/YourApp.csproj
