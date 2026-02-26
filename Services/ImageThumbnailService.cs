@@ -9,6 +9,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     private readonly IFileTypeService _fileTypeService;
     private readonly ImageThumbnailer _imageThumbnailer;
     private readonly VideoThumbnailer _videoThumbnailer;
+    private readonly DirectoryThumbnailer _directoryThumbnailer;
     private readonly IDistributedCache _cache;
     private readonly ILogger<ImageThumbnailService> _logger;
 
@@ -18,7 +19,7 @@ public class ImageThumbnailService : IImageThumbnailService {
 
     private readonly int[] _allowedThumbnailCacheSizes = {240, 280, 300, 340};
 
-    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger) {
+    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer) {
         _shareService = shareService;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
@@ -27,6 +28,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         _videoThumbnailer = videoThumbnailer;
         _cache = cache;
         _logger = logger;
+        _directoryThumbnailer = directoryThumbnailer;
     }
 
     public async Task<byte[]> GetImageThumbnail(string share, string path, int size = 240) {
@@ -42,7 +44,8 @@ public class ImageThumbnailService : IImageThumbnailService {
         if(Directory.Exists(filePath)) {
             // data = GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
             // var t = _thumbnailQueue.EnqueueAsync(filePath);
-            data = _imageThumbnailer.GetThumbnailImage(share, path, size);
+            // data = _imageThumbnailer.GetThumbnailImage(share, path, size);
+            data = _directoryThumbnailer.FindThumbnail(share, path, size);
             // data = _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path, size);
             // cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
             // var data = GetThumbnailImageUsingComplicatedFaceDetection(share, path);

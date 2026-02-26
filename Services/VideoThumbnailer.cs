@@ -5,9 +5,11 @@ namespace WebFileBrowser.Services;
 
 public class VideoThumbnailer {
     private readonly ImageThumbnailer _imageThumbnailer;
+    private readonly IShareService _shareService;
 
-    public VideoThumbnailer(ImageThumbnailer imageThumbnailer) {
+    public VideoThumbnailer(ImageThumbnailer imageThumbnailer, IShareService shareService) {
         _imageThumbnailer = imageThumbnailer;
+        _shareService = shareService;
     }
 
     public byte[]? GetVideoThumbnail(string path, int size) {
@@ -20,6 +22,15 @@ public class VideoThumbnailer {
             _imageThumbnailer.ScaleImageToThumbnail(srcImage, size);
             return _imageThumbnailer.GetImageAsBytes(srcImage);
         }
+    }
+
+    public Image<Rgb24>? LoadThumbnailImageForFile(string share, string path) {
+        var thumbnailPath = FindVideoThumbnailPath(_shareService.GetPath(share, path));
+        if(thumbnailPath == null) {
+            return null;
+        }
+
+        return Image.Load<Rgb24>(thumbnailPath);
     }
 
     public string? FindVideoThumbnailPath(string videoPath) {

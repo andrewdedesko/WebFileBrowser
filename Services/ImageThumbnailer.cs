@@ -37,10 +37,14 @@ public class ImageThumbnailer {
         }
 
         using(var srcImage = Image.Load<Rgb24>(_shareService.GetPath(share, thumbnailFilePath))) {
-            _cropToSquareAroundFace(srcImage);
+            CropImageToSquareAroundFace(srcImage);
             ScaleImageToThumbnail(srcImage, size);
             return GetImageAsBytes(srcImage);
         }
+    }
+
+    public Image<Rgb24> LoadThumbnailImageForFile(string share, string path) {
+        return Image.Load<Rgb24>(_shareService.GetPath(share, path));
     }
 
     private string? _findThumbnailFilePath(string share, string path) {
@@ -155,7 +159,7 @@ public class ImageThumbnailer {
         }
 
         using(var srcImage = Image.Load<Rgb24>(thumbnailFilePath)) {
-            _cropToSquareAroundFace(srcImage);
+            CropImageToSquareAroundFace(srcImage);
             ScaleImageToThumbnail(srcImage, size);
             return GetImageAsBytes(srcImage);
         }
@@ -325,7 +329,7 @@ public class ImageThumbnailer {
         return null;
     }
 
-    private void _cropToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
+    public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
         var det = FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
         var eyeDet = FaceAiSharpBundleFactory.CreateEyeStateDetector();
 
