@@ -333,11 +333,10 @@ public class ImageThumbnailer {
         var det = FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
         var eyeDet = FaceAiSharpBundleFactory.CreateEyeStateDetector();
 
-        var imgCopy = srcImage.Clone();
-        var cropRect = new Rectangle(srcImage.Bounds.Width / 8, srcImage.Bounds.Height / 8, srcImage.Bounds.Width * 6 / 8, srcImage.Bounds.Height * 6 / 8);
-        imgCopy.Mutate(i => i.Crop(cropRect));
-
-        var faces = det.DetectFaces(imgCopy);
+        double minimumEdgeDistanceFactor = (double)1 / 8;
+        var minimumEdgeDistance = Math.Min(srcImage.Width, srcImage.Height) * minimumEdgeDistanceFactor;
+        var faces = det.DetectFaces(srcImage)
+            .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
         if(!faces.Any()) {
             return;
         }
@@ -349,10 +348,10 @@ public class ImageThumbnailer {
         if(annotateImage) {
             var pen = Pens.Dot(Color.GreenYellow, 2);
             foreach(var face in faces) {
-                var faceX = (int)Math.Floor((face.Box.Left + srcWidth / 8));
+                var faceX = (int)Math.Floor((face.Box.Left));
                 var faceWidth = (int)Math.Floor(face.Box.Width);
 
-                var faceY = (int)Math.Floor((face.Box.Top + srcHeight / 8));
+                var faceY = (int)Math.Floor((face.Box.Top));
                 var faceHeight = (int)Math.Floor(face.Box.Height);
 
                 var rectangle = new Rectangle(faceX, faceY, faceWidth, faceHeight);
@@ -362,10 +361,10 @@ public class ImageThumbnailer {
 
         // Crop to square around face
         if(faces.Any()) {
-            var _mostLeftFace = faces.Select(f => f.Box.Left).Order().First();
-            var _mostRightFace = faces.Select(f => f.Box.Right).OrderDescending().First();
-            var _mostTopFace = faces.Select(f => f.Box.Top).Order().First();
-            var _mostBottomFace = faces.Select(f => f.Box.Bottom).OrderDescending().First();
+            int _mostLeftFace = (int)Math.Floor(faces.Select(f => f.Box.Left).Order().First());
+            int _mostRightFace = (int)Math.Floor(faces.Select(f => f.Box.Right).OrderDescending().First());
+            int _mostTopFace = (int)Math.Floor(faces.Select(f => f.Box.Top).Order().First());
+            int _mostBottomFace = (int)Math.Floor(faces.Select(f => f.Box.Bottom).OrderDescending().First());
 
             double imageMarginLower = 0.33;
             double imageMarginUpper = 0.66;
@@ -374,13 +373,12 @@ public class ImageThumbnailer {
                 imageMarginUpper = 0.8;
             }
 
-
             int faceMargin = 0;
 
-            int srcFaceLeft = (int)Math.Floor((_mostLeftFace + srcWidth / 8)) - faceMargin;
-            int srcFaceRight = (int)Math.Floor(_mostRightFace + srcWidth / 8) + faceMargin;
-            int srcFaceTop = (int)Math.Floor((_mostTopFace + srcHeight / 8)) - faceMargin;
-            int srcFaceBottom = (int)Math.Floor(_mostBottomFace + srcHeight / 8) + faceMargin;
+            int srcFaceLeft = _mostLeftFace - faceMargin;
+            int srcFaceRight = _mostRightFace + faceMargin;
+            int srcFaceTop = _mostTopFace - faceMargin;
+            int srcFaceBottom = _mostBottomFace + faceMargin;
             var srcFaceWidth = srcFaceRight - srcFaceLeft;
             var srcFaceHeight = srcFaceBottom - srcFaceTop;
 
