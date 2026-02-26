@@ -363,45 +363,57 @@ public class ImageThumbnailer {
         // Crop to square around face
         if(faces.Any()) {
             var face = faces.First();
-            int srcFaceLeft = (int)Math.Floor((face.Box.Left + srcWidth / 8));
-            int srcFaceRight = srcFaceLeft + (int)Math.Floor(face.Box.Width);
-            int srcFaceTop = (int)Math.Floor((face.Box.Top + srcHeight / 8));
-            int srcFaceBottom = srcFaceTop + (int)Math.Floor(face.Box.Height);
+            int faceMargin = (int)Math.Floor(face.Box.Width * face.Box.Height * 0.1);
+            faceMargin = 0;
+            int srcFaceLeft = (int)Math.Floor((face.Box.Left + srcWidth / 8)) - faceMargin;
+            int srcFaceRight = srcFaceLeft + (int)Math.Floor(face.Box.Width) + faceMargin;
+            int srcFaceTop = (int)Math.Floor((face.Box.Top + srcHeight / 8)) - faceMargin;
+            int srcFaceBottom = srcFaceTop + (int)Math.Floor(face.Box.Height) + faceMargin;
 
             var smallestDimension = Math.Min(srcWidth, srcHeight);
 
             var cropLeft = 0;
             if(srcWidth > smallestDimension) {
                 int srcFaceCentre = srcFaceLeft + (int)face.Box.Width / 2;
-                float srcFaceCentrePercentage = (float)srcFaceCentre / srcWidth;
+                double srcFaceCentrePercentage = (double)srcFaceCentre / srcWidth;
+
+                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, 0.33, 0.66);
 
                 int cropFaceCentre = (int)Math.Floor(smallestDimension * srcFaceCentrePercentage);
                 cropLeft = srcFaceCentre - cropFaceCentre;
 
                 if(face.Box.Width < smallestDimension) {
-                    if(srcFaceLeft <= cropLeft || srcFaceRight >= cropLeft + smallestDimension) {
-                        cropLeft = (int)Math.Clamp(srcFaceCentre - (srcWidth / 2), 0, srcWidth);
+                    if(cropLeft < 0) {
+                        cropLeft = 0;
+                    }
+
+                    if(cropLeft + smallestDimension > srcWidth) {
+                        cropLeft = srcWidth - smallestDimension;
                     }
                 }
             }
 
             var cropTop = 0;
             if(srcHeight > smallestDimension) {
-                // int srcFaceCentre = srcFaceTop + (int)face.Box.Height / 2;
-                int srcFaceCentre = srcFaceTop + (int)face.Box.Height / 3;  // Get the top third to pseudo focus on the person's eyes
-                float srcFaceCentrePercentage = (float)srcFaceCentre / srcHeight;
+                int srcFaceCentre = srcFaceTop + (int)face.Box.Height / 2;
+                double srcFaceCentrePercentage = (double)srcFaceCentre / srcHeight;
+
+                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, 0.33, 0.66);
 
                 if(annotateImage) {
                     var centreLinePen = Pens.Solid(Color.AliceBlue);
                     srcImage.Mutate(i => i.Draw(centreLinePen, new Rectangle(0, srcFaceCentre, srcWidth, 2)));
                 }
 
-
                 int cropFaceCentre = (int)Math.Floor(smallestDimension * srcFaceCentrePercentage);
                 cropTop = srcFaceCentre - cropFaceCentre;
                 if(face.Box.Height < smallestDimension) {
-                    if(srcFaceTop <= cropTop || srcFaceBottom >= cropTop + smallestDimension) {
-                        cropTop = (int)Math.Clamp(srcFaceCentre - (srcHeight / 2), 0, srcHeight);
+                    if(cropTop < 0) {
+                        cropTop = 0;
+                    }
+
+                    if(cropTop + smallestDimension > srcHeight) {
+                        cropTop = srcHeight - smallestDimension;
                     }
                 }
             }
