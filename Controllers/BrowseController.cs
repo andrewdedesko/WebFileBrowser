@@ -220,6 +220,17 @@ public class BrowseController : Controller
         return Ok();
     }
 
+    public async Task<IActionResult> ReThumbnail(string share, string path, int size = 240) {
+        await _imageThumbnailService.FlushThumbnailFromCache(share, path);
+
+        try {
+            var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path, size);
+            return File(thumbnail, _imageThumbnailService.GetThumbnailImageMimeType());
+        } catch(ThumbnailNotAvailableException) {
+            return NotFound();
+        }
+    }
+
     private bool IsMp4(string extension) =>
         extension == ".mp4";
 
