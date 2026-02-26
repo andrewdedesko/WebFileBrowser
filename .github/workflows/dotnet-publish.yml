@@ -51,9 +51,9 @@ jobs:
         run: |
           # Build the tag list
           TAGS="sha-${GITHUB_SHA::7}"
-          TAGS="${TAGS} ${GITHUB_REF_NAME}"
+          TAGS="${TAGS};${GITHUB_REF_NAME}"
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            TAGS="${TAGS} latest"
+            TAGS="${TAGS};latest"
           fi
           
           dotnet publish \
