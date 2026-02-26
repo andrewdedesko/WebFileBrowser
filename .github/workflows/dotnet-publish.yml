@@ -54,6 +54,7 @@ jobs:
             -c Release \
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }}/andrewdedesko \
-            -p:ContainerRepository=${{ env.IMAGE_NAME }} \
-            -p:ContainerImageTags="${{ steps.meta.outputs.tags }}"
+            -p:ContainerRepository=${{ env.IMAGE_NAME }}
+            -p:ContainerImageTags="main;latest"
+        # -p:ContainerImageTags="${{ steps.meta.outputs.tags }}"
         # If your app is not at the repo root, add: --project path/to/YourApp.csproj
