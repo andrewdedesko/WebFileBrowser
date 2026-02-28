@@ -221,14 +221,22 @@ public class BrowseController : Controller
     }
 
     public async Task<IActionResult> ReThumbnail(string share, string path, int size = 240) {
-        await _imageThumbnailService.FlushThumbnailFromCache(share, path);
-
         try {
-            var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path, size);
+            var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path, size, refreshCache: true);
             return File(thumbnail, _imageThumbnailService.GetThumbnailImageMimeType());
         } catch(ThumbnailNotAvailableException) {
             return NotFound();
         }
+    }
+
+    public async Task<IActionResult> RefreshThumbnail(string share, string path) {
+        await _imageThumbnailService.RefreshThumbnailAsync(share, path);
+        return Ok("Refreshing thumbnail");
+    }
+
+    public async Task<IActionResult> RefreshThumbnails(string share, string path) {
+        await _imageThumbnailService.RefreshThumbnailsAsync(share, path);
+        return Ok("Refreshing thumbnails");
     }
 
     private bool IsMp4(string extension) =>

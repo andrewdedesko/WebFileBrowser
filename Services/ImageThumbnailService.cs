@@ -11,6 +11,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     private readonly VideoThumbnailer _videoThumbnailer;
     private readonly DirectoryThumbnailer _directoryThumbnailer;
     private readonly IDistributedCache _cache;
+    private readonly BackgroundThumbnailQueue _backgroundThumbnailQueue;
     private readonly ILogger<ImageThumbnailService> _logger;
 
     private readonly BackgroundThumbnailQueue _thumbnailQueue;
@@ -19,7 +20,7 @@ public class ImageThumbnailService : IImageThumbnailService {
 
     private readonly int[] _allowedThumbnailCacheSizes = { 240, 280, 300, 340 };
 
-    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer) {
+    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer, BackgroundThumbnailQueue backgroundThumbnailQueue) {
         _shareService = shareService;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
@@ -29,10 +30,11 @@ public class ImageThumbnailService : IImageThumbnailService {
         _cache = cache;
         _logger = logger;
         _directoryThumbnailer = directoryThumbnailer;
+        _backgroundThumbnailQueue = backgroundThumbnailQueue;
     }
 
-    public async Task<byte[]> GetImageThumbnail(string share, string path, int size = 240, bool useCache = true) {
-        if(useCache) {
+    public async Task<byte[]> GetImageThumbnail(string share, string path, int size, bool useCache = true, bool refreshCache = false) {
+        if(useCache && !refreshCache) {
             byte[]? cachedThumbnail = await FindCachedThumbnailAsync(share, path, size);
             if(cachedThumbnail != null) {
                 return cachedThumbnail;
@@ -62,7 +64,7 @@ public class ImageThumbnailService : IImageThumbnailService {
             throw new ThumbnailNotAvailableException($"Could not get a thumbnail for share: {share}, path: {path}");
         }
 
-        if(useCache) {
+        if(useCache || refreshCache) {
             await SetThumbnailCacheAsync(share, path, size, data);
         }
 
@@ -127,6 +129,29 @@ public class ImageThumbnailService : IImageThumbnailService {
         }
     }
 
+    public async Task RefreshThumbnailAsync(string share, string path, int size) {
+        await FlushThumbnailFromCache(share, path);
+        // await GetImageThumbnail(share, path, size, refreshCache: true);
+        await _backgroundThumbnailQueue.EnqueueAsync(new ThumbnailTask() {
+            Share = share,
+            Path = path
+        });
+    }
+
+    public async Task RefreshThumbnailsAsync(string share, string path, int size) {
+        await GetImageThumbnail(share, path, size, refreshCache: true);
+
+        var directories = _browseService.GetDirectories(share, path);
+        foreach(var directory in directories) {
+            await RefreshThumbnailAsync(share, directory, size);
+        }
+
+        var files = _browseService.GetFiles(share, path);
+        foreach(var file in files) {
+            await RefreshThumbnailAsync(share, file, size);
+        }
+    }
+
     private string _thumbnailCacheKey(string share, string path, int size) =>
         _thumbnailCacheKey(_shareService.GetPath(share, path), size);
 
@@ -136,11 +161,5 @@ public class ImageThumbnailService : IImageThumbnailService {
 
     private string _oldThumbnail240PxCacheKey(string share, string path) {
         return $"Thumbnail:Image:{_thumbnailImageMimeType}:{_shareService.GetPath(share, path)}";
-    }
-
-    private void _validateThumbnailSize(int size) {
-        // if(!_allowedThumbnailSizes.Contains(size)) {
-        //     throw new ArgumentException($"Invalid thumbnail size: {size}");
-        // }
     }
 }

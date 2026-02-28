@@ -6,22 +6,22 @@ namespace WebFileBrowser.Controllers;
 
 [Authorize]
 public class AdminController : Controller {
-    private readonly ThumbnailPreCacheBackgroundService _thumbnailPreCacheBackgroundService;
+    // private readonly ThumbnailPreCacheBackgroundService _thumbnailPreCacheBackgroundService;
+    private readonly ThumbnailBackgroundProcessingService _thumbnailBackgroundProcessingService;
 
-    public AdminController(ThumbnailPreCacheBackgroundService thumbnailPreCacheBackgroundService) {
-        _thumbnailPreCacheBackgroundService = thumbnailPreCacheBackgroundService;
+    public AdminController(ThumbnailBackgroundProcessingService thumbnailBackgroundProcessingService) {
+        _thumbnailBackgroundProcessingService = thumbnailBackgroundProcessingService;
     }
 
     public IActionResult Index() {
-        var isPreCaching = _thumbnailPreCacheBackgroundService.IsPreCacheRunning();
+        // var isPreCaching = _thumbnailPreCacheBackgroundService?.IsPreCacheRunning() ?? false;
+        var isPreCaching = false;
         ViewData["BackgroundJob:ThumbnailPreCaching"] = isPreCaching;
-        string status;
-        if(isPreCaching) {
-            status = "Pre-caching Thumbnails...";
-        } else {
-            status = "Idle";
-        }
+        
+        var backgroundThumbnailQueueSize = _thumbnailBackgroundProcessingService.GetQueueCount();
+        ViewData["BackgroundJob:ThumbnailQueue:Size"] = backgroundThumbnailQueueSize;
 
+        Response.Headers.Append("Refresh", "5");
         return View();
     }
 }

@@ -24,7 +24,8 @@ builder.Services.AddSingleton<ImageThumbnailer>();
 builder.Services.AddSingleton<VideoThumbnailer>();
 builder.Services.AddSingleton<DirectoryThumbnailer>();
 builder.Services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
-builder.Services.AddHostedService<ThumbnailBackgroundProcessingService>();
+builder.Services.AddSingleton<ThumbnailBackgroundProcessingService>();
+builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailBackgroundProcessingService>());
 // builder.Services.AddSingleton<ThumbnailPreCacheBackgroundService>();
 // builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailPreCacheBackgroundService>());
 

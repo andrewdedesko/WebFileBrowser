@@ -60,6 +60,14 @@
             <a href="@Url.Action("ViewImages", "Browse", new { share = Model.Share, path = Model.Path })"
                 class="btn btn-sm btn-primary" role="button">View Images</a>
         }
+
+            <div class="btn-group float-end" role="group">
+                <a href="@Url.Action("RefreshThumbnail", "Browse", new { share = Model.Share, path = Model.Path })"
+                   class="btn btn-sm btn-secondary" role="button">Refresh Thumbnail</a>
+                   
+                <a href="@Url.Action("RefreshThumbnails", "Browse", new { share = Model.Share, path = Model.Path })"
+                   class="btn btn-sm btn-secondary" role="button">Refresh Thumbnails</a>
+            </div>
     </div>
 </div>
 

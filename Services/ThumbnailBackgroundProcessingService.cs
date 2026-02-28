@@ -18,15 +18,13 @@ public class ThumbnailBackgroundProcessingService : BackgroundService {
             var t = await _queue.DequeueAsync(stoppingToken);
             _logger.LogTrace($"Processing thumbnail for {t.Share}:{t.Path}");
             try {
-                    // var data = _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(path);
-                    // if(data != null) {
-                    //     await _imageThumbnailService.SetThumbnailCacheAsync(path, data);
-                    // }
-                await _imageThumbnailService.GetImageThumbnail(t.Share, t.Path);
+                await _imageThumbnailService.GetImageThumbnail(t.Share, t.Path, refreshCache: true);
             } catch(Exception ex) {
                 _logger.LogError($"Failed to generate thumbnail for {t.Share}:{t.Path}", ex);
                 continue;
             }
         }
     }
+
+    public int GetQueueCount() => _queue.Count();
 }

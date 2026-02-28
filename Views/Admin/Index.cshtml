@@ -2,15 +2,22 @@
     <div class="column">
         <section>
             <h2>Background Jobs</h2>
-            <span>Thumbnail Pre-Caching:</span>
-            @if ((bool)ViewData["BackgroundJob:ThumbnailPreCaching"]){
-                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <strong class="text-primary">Running</strong>
-            } else {
-                <span>Idle</span>
-            }
+            <article>
+                <span>Thumbnail Pre-Caching:</span>
+                @if ((bool)ViewData["BackgroundJob:ThumbnailPreCaching"]) {
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <strong class="text-primary">Running</strong>
+                } else {
+                    <span>Idle</span>
+                }
+            </article>
+
+            <article>
+                <h3>Thumbnail Processor</h3>
+                <span>Queue Count:</span> <strong class="text-primary">@ViewData["BackgroundJob:ThumbnailQueue:Size"]</strong>
+            </article>
         </section>
     </div>
 </div>
