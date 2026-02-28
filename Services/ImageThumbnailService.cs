@@ -17,7 +17,7 @@ public class ImageThumbnailService : IImageThumbnailService {
 
     private readonly string _thumbnailImageMimeType = "image/webp";
 
-    private readonly int[] _allowedThumbnailCacheSizes = {240, 280, 300, 340};
+    private readonly int[] _allowedThumbnailCacheSizes = { 240, 280, 300, 340 };
 
     public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer) {
         _shareService = shareService;
@@ -32,7 +32,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     }
 
     public async Task<byte[]> GetImageThumbnail(string share, string path, int size = 240, bool useCache = true) {
-        if(useCache){
+        if(useCache) {
             byte[]? cachedThumbnail = await FindCachedThumbnailAsync(share, path, size);
             if(cachedThumbnail != null) {
                 return cachedThumbnail;
@@ -45,15 +45,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
-            // data = GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
-            // var t = _thumbnailQueue.EnqueueAsync(filePath);
-            // data = _imageThumbnailer.GetThumbnailImage(share, path, size);
             data = _directoryThumbnailer.FindThumbnail(share, path, size);
-            // data = _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path, size);
-            // cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
-            // var data = GetThumbnailImageUsingComplicatedFaceDetection(share, path);
-            // GetThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path);
-            // await t;
 
         } else if(!File.Exists(filePath)) {
             throw new Exception($"Cannot choose a thumbnailer for {filePath} because the file does not exist");
@@ -66,15 +58,14 @@ public class ImageThumbnailService : IImageThumbnailService {
             data = _videoThumbnailer.GetVideoThumbnail(filePath, size);
         }
 
-
         if(data == null) {
             throw new ThumbnailNotAvailableException($"Could not get a thumbnail for share: {share}, path: {path}");
         }
 
-        if(useCache){
+        if(useCache) {
             await SetThumbnailCacheAsync(share, path, size, data);
         }
-        
+
         return data;
     }
 
@@ -86,7 +77,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         }
 
         // Migrate old thumbnail cache to new cache with sizes
-        if(size == 240){
+        if(size == 240) {
             var old240PxCacheKey = _oldThumbnail240PxCacheKey(share, path);
             var oldCached240PxThumbnail = _cache.Get(old240PxCacheKey);
             if(oldCached240PxThumbnail != null) {
@@ -100,11 +91,9 @@ public class ImageThumbnailService : IImageThumbnailService {
     }
 
     public async Task FlushThumbnailFromCache(string share, string path) {
-        foreach(var size in _allowedThumbnailCacheSizes){
+        foreach(var size in _allowedThumbnailCacheSizes) {
             await _cache.RemoveAsync(_thumbnailCacheKey(share, path, size));
         }
-
-        // _logger.LogInformation($"Flushed thumbnails for {share}:{path}");
     }
 
     public async Task FlushThumbnailFromCacheRecursiveAsync(string share, string path) {
@@ -133,15 +122,15 @@ public class ImageThumbnailService : IImageThumbnailService {
         SetThumbnailCacheAsync(_shareService.GetPath(share, path), size, thumbnailData);
 
     public async Task SetThumbnailCacheAsync(string filePath, int size, byte[] thumbnailData) {
-        if(_allowedThumbnailCacheSizes.Contains(size)){
+        if(_allowedThumbnailCacheSizes.Contains(size)) {
             await _cache.SetAsync(_thumbnailCacheKey(filePath, size), thumbnailData);
         }
     }
 
     private string _thumbnailCacheKey(string share, string path, int size) =>
         _thumbnailCacheKey(_shareService.GetPath(share, path), size);
-    
-    private string _thumbnailCacheKey(string path, int size){
+
+    private string _thumbnailCacheKey(string path, int size) {
         return $"Thumbnail:Image:{_thumbnailImageMimeType}:{size}:{path}";
     }
 
