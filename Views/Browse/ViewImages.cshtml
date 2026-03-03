@@ -15,6 +15,7 @@
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <a class="nav-link active" aria-current="page" id="button-previous-image" href="#">Previous</a>
                 <span class="navbar-text" id="image-status"></span>
+                <a id="button_object_detection" class="btn btn-sm btn-primary float-end">Object Detection</a>
                 <a class="nav-link active" aria-current="page" id="button-next-image" href="#">Next</a>
             </div>
         </div>
@@ -84,6 +85,8 @@
 
             const mainImage = document.getElementById("image");
             mainImage.addEventListener("error", handleImageLoadError);
+
+                document.getElementById("button_object_detection").addEventListener("click", handleObjectDetectionClick);
         });
 
         function nextImage(){
@@ -110,6 +113,13 @@
 
                 currentImage = i;
             }
+        }
+
+        function handleObjectDetectionClick(ev){
+            ev.preventDefault();
+            const urls = @Json.Serialize(Model.Files.Select(f => Url.Action("Detect", "ObjectDetection", new{share = f.Share, path = f.Path})));
+            const url = urls[currentImage];
+            window.open(url, "_blank").focus()
         }
 
         function preloadImagesByIndex(...indexes){

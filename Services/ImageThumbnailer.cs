@@ -5,6 +5,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using WebFileBrowser.Models;
+using WebFileBrowser.Services.ObjectDetection;
 
 namespace WebFileBrowser.Services;
 
@@ -12,13 +13,15 @@ public class ImageThumbnailer {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
     private readonly IFileTypeService _fileTypeService;
+    private readonly CustomObjectDetector _customObjectDetector;
     private readonly ILogger<ImageThumbnailer> _logger;
 
-    public ImageThumbnailer(IShareService shareService, IFileTypeService fileTypeService, ILogger<ImageThumbnailer> logger, IBrowseService browseService) {
+    public ImageThumbnailer(IShareService shareService, IFileTypeService fileTypeService, ILogger<ImageThumbnailer> logger, IBrowseService browseService, CustomObjectDetector customObjectDetector) {
         _shareService = shareService;
         _fileTypeService = fileTypeService;
         _logger = logger;
         _browseService = browseService;
+        _customObjectDetector = customObjectDetector;
     }
 
     public byte[] GetThumbnailImage(string share, string path, int size) {
@@ -335,8 +338,11 @@ public class ImageThumbnailer {
 
         double minimumEdgeDistanceFactor = (double)1 / 15;
         var minimumEdgeDistance = Math.Min(srcImage.Width, srcImage.Height) * minimumEdgeDistanceFactor;
-        var faces = det.DetectFaces(srcImage)
-            .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
+        // var faces = det.DetectFaces(srcImage)
+        //     .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
+        var faces = _customObjectDetector.FindObjects(srcImage)
+            .Select(p => new FaceDetectorResult(new RectangleF(p.Box.Xmin, p.Box.Ymin, p.Box.Xmax - p.Box.Xmin, p.Box.Ymax - p.Box.Ymin), new List<PointF>().AsReadOnly(), p.Confidence));
+            // .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
         if(!faces.Any()) {
             return;
         }

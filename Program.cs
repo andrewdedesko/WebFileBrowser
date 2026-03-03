@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using WebFileBrowser.Configuration;
 using WebFileBrowser.Services;
+using WebFileBrowser.Services.ObjectDetection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,8 @@ builder.Services.AddSingleton<IShareService, ShareService>();
 builder.Services.AddSingleton<FileSystemBrowseService>();
 builder.Services.AddSingleton<IBrowseService>(ctx => ctx.GetRequiredService<FileSystemBrowseService>());
 builder.Services.AddSingleton<IFileTypeService, FileTypeService>();
+
+builder.Services.AddSingleton<CustomObjectDetector>();
 
 builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
     return new BackgroundThumbnailQueue(1000);
