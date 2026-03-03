@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using WebFileBrowser.Configuration;
 using WebFileBrowser.Services;
+using WebFileBrowser.Services.ObjectDetection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,9 @@ builder.Services.AddSingleton<ThumbnailBackgroundProcessingService>();
 builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailBackgroundProcessingService>());
 // builder.Services.AddSingleton<ThumbnailPreCacheBackgroundService>();
 // builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailPreCacheBackgroundService>());
+
+builder.Services.AddSingleton<IObjectDetector, SharpAiFaceDetector>();
+builder.Services.AddSingleton<IObjectDetector, YoloCocoObjectDetector>();
 
 var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
 if(cacheType == "redis") {
