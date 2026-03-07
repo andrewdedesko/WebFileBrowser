@@ -53,7 +53,7 @@ jobs:
             --os linux \
             --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_NAME }} \
             -p:ContainerImageTags="\"${{ steps.meta.outputs.tag-names }}\""
