@@ -15,4 +15,11 @@
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Ai/yolo26s-coco.onnx">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <TargetPath>Onnx/yolo26s-coco.onnx</TargetPath>
+    </Content>
+  </ItemGroup>
+
 </Project>
