@@ -65,16 +65,29 @@
             </ul>
         }
 
-        @if(Model.Files.Any()){
-            <ul class="file-list">
-                @foreach(var file in Model.Files){
-                    @if(file.IsImage){
-                            <li><a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share" asp-route-path="@Model.Path" asp-route-image="@file.Name">@file.Name</a></li>
-                    }else if(file.IsVideo){
-                        <li><a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share" asp-route-path="@file.Path">@file.Name</a></li>
-                    }else{
-                        <li>@file.Name</li>
+        @if(Model.Files.Any(f => f.IsVideo)){
+                <ul class="file-list">
+                    @foreach (var file in Model.Files.Where(f => f.IsVideo))
+                    {
+                        
+                        <li><a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
+                                    asp-route-path="@file.Path">@file.Name</a></li>
                     }
+                </ul>
+        }
+
+        @if(Model.Files.Any(f => f.IsImage)){
+            <ul class="file-list">
+                @foreach(var file in Model.Files.Where(f => f.IsImage)){
+                    <li><a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share" asp-route-path="@Model.Path" asp-route-image="@file.Name">@file.Name</a></li>    
+                }
+            </ul>
+        }
+
+        @if(Model.Files.Any(f => !f.IsImage && !f.IsVideo)){
+            <ul class="file-list">
+                @foreach(var file in Model.Files.Where(f => !f.IsImage && !f.IsVideo)){
+                    <li>@file.Name</li>
                 }
             </ul>
         }
