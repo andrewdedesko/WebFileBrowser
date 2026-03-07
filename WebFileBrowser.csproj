@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Ai/yolo26s-coco.onnx">
+    <Content Include="onnx/yolo26s-coco.onnx">
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-      <TargetPath>Onnx/yolo26s-coco.onnx</TargetPath>
+      <TargetPath>onnx/yolo26s-coco.onnx</TargetPath>
     </Content>
   </ItemGroup>
 
