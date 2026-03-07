@@ -13,15 +13,17 @@ public class ImageThumbnailer {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
     private readonly IFileTypeService _fileTypeService;
-    private readonly CustomObjectDetector _customObjectDetector;
+    private readonly IObjectDetector _objectDetector;
+    private readonly IEnumerable<IObjectDetector> _objectDetectors;
     private readonly ILogger<ImageThumbnailer> _logger;
 
-    public ImageThumbnailer(IShareService shareService, IFileTypeService fileTypeService, ILogger<ImageThumbnailer> logger, IBrowseService browseService, CustomObjectDetector customObjectDetector) {
+    public ImageThumbnailer(IShareService shareService, IFileTypeService fileTypeService, ILogger<ImageThumbnailer> logger, IBrowseService browseService, IObjectDetector objectDetector, IEnumerable<IObjectDetector> objectDetectors) {
         _shareService = shareService;
         _fileTypeService = fileTypeService;
         _logger = logger;
         _browseService = browseService;
-        _customObjectDetector = customObjectDetector;
+        _objectDetector = objectDetector;
+        _objectDetectors = objectDetectors;
     }
 
     public byte[] GetThumbnailImage(string share, string path, int size) {
@@ -333,18 +335,29 @@ public class ImageThumbnailer {
     }
 
     public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
-        var det = FaceAiSharpBundleFactory.CreateFaceDetectorWithLandmarks();
-        var eyeDet = FaceAiSharpBundleFactory.CreateEyeStateDetector();
-
         double minimumEdgeDistanceFactor = (double)1 / 15;
         var minimumEdgeDistance = Math.Min(srcImage.Width, srcImage.Height) * minimumEdgeDistanceFactor;
         // var faces = det.DetectFaces(srcImage)
         //     .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
-        var faces = _customObjectDetector.FindObjects(srcImage)
-            .Select(p => new FaceDetectorResult(new RectangleF(p.Box.Xmin, p.Box.Ymin, p.Box.Xmax - p.Box.Xmin, p.Box.Ymax - p.Box.Ymin), new List<PointF>().AsReadOnly(), p.Confidence));
-            // .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
-        if(!faces.Any()) {
-            return;
+
+
+        List<Prediction> predictions = new();
+        foreach(var detector in _objectDetectors){
+            predictions.AddRange(detector.FindObjects(srcImage));
+        }
+
+        // IEnumerable<FaceAiSharp.FaceDetectorResult> faces;
+        // IEnumerable<Prediction> facePredictions;
+        IEnumerable<Box> cropTargets;
+        if(predictions.Any(p => p.ObjectClass == DetectedObjectClass.Face)) {
+            cropTargets = predictions
+                .Where(f => f.ObjectClass == DetectedObjectClass.Face)
+                .Select(p => p.Box)
+                .AsEnumerable();
+        } else {
+            cropTargets = predictions
+                .Where(p => p.ObjectClass == DetectedObjectClass.Person)
+                .Select(p => p.Box);
         }
 
         var srcWidth = srcImage.Bounds.Width;
@@ -353,12 +366,12 @@ public class ImageThumbnailer {
         // Annotate faces
         if(annotateImage) {
             var pen = Pens.Dot(Color.GreenYellow, 2);
-            foreach(var face in faces) {
-                var faceX = (int)Math.Floor((face.Box.Left));
-                var faceWidth = (int)Math.Floor(face.Box.Width);
+            foreach(var box in cropTargets) {
+                var faceX = (int)Math.Floor((box.Left));
+                var faceWidth = (int)Math.Floor(box.Width);
 
-                var faceY = (int)Math.Floor((face.Box.Top));
-                var faceHeight = (int)Math.Floor(face.Box.Height);
+                var faceY = (int)Math.Floor((box.Top));
+                var faceHeight = (int)Math.Floor(box.Height);
 
                 var rectangle = new Rectangle(faceX, faceY, faceWidth, faceHeight);
                 srcImage.Mutate(i => i.Draw(pen, rectangle));
@@ -366,15 +379,17 @@ public class ImageThumbnailer {
         }
 
         // Crop to square around face
-        if(faces.Any()) {
-            int _mostLeftFace = (int)Math.Floor(faces.Select(f => f.Box.Left).Order().First());
-            int _mostRightFace = (int)Math.Floor(faces.Select(f => f.Box.Right).OrderDescending().First());
-            int _mostTopFace = (int)Math.Floor(faces.Select(f => f.Box.Top).Order().First());
-            int _mostBottomFace = (int)Math.Floor(faces.Select(f => f.Box.Bottom).OrderDescending().First());
+        if(cropTargets.Any()) {
+            int _mostLeftFace = (int)Math.Floor(cropTargets.Select(f => f.Left).Order().First());
+            int _mostRightFace = (int)Math.Floor(cropTargets.Select(f => f.Right).OrderDescending().First());
+            int _mostTopFace = (int)Math.Floor(cropTargets.Select(f => f.Top).Order().First());
+            int _mostBottomFace = (int)Math.Floor(cropTargets.Select(f => f.Bottom).OrderDescending().First());
+            int boundingBoxWidth = _mostRightFace - _mostLeftFace;
+            int boundingBoxHeight = _mostBottomFace - _mostTopFace;
 
             double imageMarginLower = 0.33;
             double imageMarginUpper = 0.66;
-            if(faces.Count() > 1) {
+            if(cropTargets.Count() > 1) {
                 imageMarginLower = 0.2;
                 imageMarginUpper = 0.8;
             }
@@ -389,6 +404,9 @@ public class ImageThumbnailer {
             var srcFaceHeight = srcFaceBottom - srcFaceTop;
 
             var smallestDimension = Math.Min(srcWidth, srcHeight);
+            if(smallestDimension < boundingBoxWidth || smallestDimension < boundingBoxHeight) {
+                return;
+            }
 
             var cropLeft = 0;
             if(srcWidth > smallestDimension) {

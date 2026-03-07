@@ -18,8 +18,6 @@ builder.Services.AddSingleton<FileSystemBrowseService>();
 builder.Services.AddSingleton<IBrowseService>(ctx => ctx.GetRequiredService<FileSystemBrowseService>());
 builder.Services.AddSingleton<IFileTypeService, FileTypeService>();
 
-builder.Services.AddSingleton<CustomObjectDetector>();
-
 builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
     return new BackgroundThumbnailQueue(1000);
 });
@@ -31,6 +29,9 @@ builder.Services.AddSingleton<ThumbnailBackgroundProcessingService>();
 builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailBackgroundProcessingService>());
 // builder.Services.AddSingleton<ThumbnailPreCacheBackgroundService>();
 // builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailPreCacheBackgroundService>());
+
+builder.Services.AddSingleton<IObjectDetector, SharpAiFaceDetector>();
+builder.Services.AddSingleton<IObjectDetector, YoloCocoObjectDetector>();
 
 var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
 if(cacheType == "redis") {
