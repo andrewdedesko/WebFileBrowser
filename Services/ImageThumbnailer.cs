@@ -335,25 +335,48 @@ public class ImageThumbnailer {
     }
 
     public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
-        double minimumEdgeDistanceFactor = (double)1 / 15;
-        var minimumEdgeDistance = Math.Min(srcImage.Width, srcImage.Height) * minimumEdgeDistanceFactor;
-        // var faces = det.DetectFaces(srcImage)
-        //     .Where(f => f.Box.Left >= minimumEdgeDistance && f.Box.Right <= srcImage.Width - minimumEdgeDistance && f.Box.Top >= minimumEdgeDistance && f.Box.Bottom <= srcImage.Height - minimumEdgeDistance);
-
-
         List<Prediction> predictions = new();
         foreach(var detector in _objectDetectors){
             predictions.AddRange(detector.FindObjects(srcImage));
         }
 
-        // IEnumerable<FaceAiSharp.FaceDetectorResult> faces;
-        // IEnumerable<Prediction> facePredictions;
         IEnumerable<Box> cropTargets;
         if(predictions.Any(p => p.ObjectClass == DetectedObjectClass.Face)) {
-            cropTargets = predictions
-                .Where(f => f.ObjectClass == DetectedObjectClass.Face)
-                .Select(p => p.Box)
-                .AsEnumerable();
+            List<List<Box>> faceTargets = new();
+
+            // Faces inside detected people
+            var faces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);
+            var people = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Person);
+
+            var facesByArea = faces
+                    .OrderByDescending(f => _getArea(f));
+
+            int faceAreaThreshold = 0;
+            if(faces.Count() > 1) {
+                var largestFaceArea = _getArea(faces.First());
+                var smallestFaceArea = _getArea(faces.Last());
+
+                faceAreaThreshold = (int)Math.Floor(smallestFaceArea + (largestFaceArea - smallestFaceArea) / 2);
+                faceAreaThreshold = (int)Math.Floor(faceAreaThreshold * 0.75);
+            }
+
+            var facesInPeopleBoundaries = faces
+                .Where(f => _getArea(f) >= faceAreaThreshold)
+                .Where(f => people.Any(p => f.Box.Left >= p.Box.Left && f.Box.Right <= p.Box.Right && f.Box.Top >= p.Box.Top && f.Box.Bottom <= p.Box.Bottom));
+
+            var facesByPerson = facesInPeopleBoundaries
+                .GroupBy(f => people.First(p => f.Box.Left >= p.Box.Left && f.Box.Right <= p.Box.Right && f.Box.Top >= p.Box.Top && f.Box.Bottom <= p.Box.Bottom));
+
+            if(facesInPeopleBoundaries.Any()) {
+                cropTargets = facesInPeopleBoundaries
+                    .Select(f => f.Box)
+                    .AsEnumerable();
+            }else{
+                cropTargets = faces
+                    .Where(f => _getArea(f) >= faceAreaThreshold)
+                    .Select(p => p.Box)
+                    .AsEnumerable();
+            }
         } else {
             cropTargets = predictions
                 .Where(p => p.ObjectClass == DetectedObjectClass.Person)
@@ -365,7 +388,7 @@ public class ImageThumbnailer {
 
         // Annotate faces
         if(annotateImage) {
-            var pen = Pens.Dot(Color.GreenYellow, 2);
+            var pen = Pens.Solid(Color.GreenYellow, 2);
             foreach(var box in cropTargets) {
                 var faceX = (int)Math.Floor((box.Left));
                 var faceWidth = (int)Math.Floor(box.Width);
@@ -512,4 +535,10 @@ public class ImageThumbnailer {
         }
         image.Mutate(x => x.Resize(width, height));
     }
+
+    private static float _getArea(Box box) =>
+        box.Width * box.Height;
+
+    private static float _getArea(Prediction prediction) =>
+        _getArea(prediction.Box);
 }
