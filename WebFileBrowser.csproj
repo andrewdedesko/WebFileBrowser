@@ -20,6 +20,10 @@
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       <TargetPath>onnx/yolo26s-coco.onnx</TargetPath>
     </Content>
+
+    <Content Include="JetBrainsMono-Regular.ttf">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
