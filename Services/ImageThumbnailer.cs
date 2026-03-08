@@ -334,19 +334,12 @@ public class ImageThumbnailer {
         return null;
     }
 
-    public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
-        List<Prediction> predictions = new();
-        foreach(var detector in _objectDetectors){
-            predictions.AddRange(detector.FindObjects(srcImage));
-        }
+    private IEnumerable<Box> _getHumanCropTargets(IEnumerable<Prediction> predictions) {
+        var faces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);
+        var people = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Person);
 
-        IEnumerable<Box> cropTargets;
         if(predictions.Any(p => p.ObjectClass == DetectedObjectClass.Face)) {
             List<List<Box>> faceTargets = new();
-
-            // Faces inside detected people
-            var faces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);
-            var people = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Person);
 
             var facesByArea = faces
                     .OrderByDescending(f => _getArea(f));
@@ -364,24 +357,31 @@ public class ImageThumbnailer {
                 .Where(f => _getArea(f) >= faceAreaThreshold)
                 .Where(f => people.Any(p => f.Box.Left >= p.Box.Left && f.Box.Right <= p.Box.Right && f.Box.Top >= p.Box.Top && f.Box.Bottom <= p.Box.Bottom));
 
-            var facesByPerson = facesInPeopleBoundaries
-                .GroupBy(f => people.First(p => f.Box.Left >= p.Box.Left && f.Box.Right <= p.Box.Right && f.Box.Top >= p.Box.Top && f.Box.Bottom <= p.Box.Bottom));
-
             if(facesInPeopleBoundaries.Any()) {
-                cropTargets = facesInPeopleBoundaries
+                return facesInPeopleBoundaries
                     .Select(f => f.Box)
                     .AsEnumerable();
-            }else{
-                cropTargets = faces
-                    .Where(f => _getArea(f) >= faceAreaThreshold)
-                    .Select(p => p.Box)
-                    .AsEnumerable();
             }
-        } else {
-            cropTargets = predictions
-                .Where(p => p.ObjectClass == DetectedObjectClass.Person)
-                .Select(p => p.Box);
+
+            if(people.Any()) {
+                return people.Select(p => p.Box).AsEnumerable();
+            }
         }
+
+        if(people.Any()) {
+            return people.Select(p => p.Box).AsEnumerable();
+        }
+
+        return Enumerable.Empty<Box>();
+    }
+
+    public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
+        List<Prediction> predictions = new();
+        foreach(var detector in _objectDetectors){
+            predictions.AddRange(detector.FindObjects(srcImage));
+        }
+
+        IEnumerable<Box> cropTargets = _getHumanCropTargets(predictions);
 
         var srcWidth = srcImage.Bounds.Width;
         var srcHeight = srcImage.Bounds.Height;
