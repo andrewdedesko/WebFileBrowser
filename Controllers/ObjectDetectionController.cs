@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -10,6 +11,7 @@ using WebFileBrowser.Services.ObjectDetection;
 
 namespace WebFileBrowser.Controllers;
 
+[Authorize]
 public class ObjectDetectionController : Controller {
     private readonly IShareService _shareService;
     private readonly IEnumerable<IObjectDetector> _customObjectDetectors;
@@ -36,21 +38,13 @@ public class ObjectDetectionController : Controller {
                 predictions.AddRange(detector.FindObjects(sourceImage));
             }
 
-            const string TextFont = "JetBrains Mono";
             const float fontSize = 14f;
-
-            // foreach(var fam in SystemFonts.Families) {
-            //     System.Console.WriteLine(fam.Name);
-            // }
-            FontFamily fontFamily;
-            if(!SystemFonts.TryGet(TextFont, out fontFamily))
-                throw new Exception($"Couldn't find font {TextFont}");
-
-            var font = fontFamily.CreateFont(fontSize, FontStyle.Regular);
+            var font = _getFont(fontSize);
 
             Dictionary<string, Color> classColors = new();
             classColors.Add("face", Color.SeaGreen);
             classColors.Add("person", Color.SeaGreen);
+            classColors.Add("head_neck_face", Color.SeaGreen);
 
             var foundObjects = predictions.Select(p => $"{p.Label}: {p.Confidence}").ToArray();
             foreach(var p in predictions) {
@@ -99,5 +93,11 @@ public class ObjectDetectionController : Controller {
 
         var thumbnailData = thumbnailImageStream.ToArray();
         return thumbnailData;
+    }
+
+    private static Font _getFont(float size) {
+        FontCollection fontCollection = new();
+        var family = fontCollection.Add("JetBrainsMono-Regular.ttf");
+        return family.CreateFont(size, FontStyle.Regular);
     }
 }
