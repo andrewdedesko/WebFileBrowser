@@ -219,18 +219,18 @@
         } *@
 
                             .content-container {
-                            grid-template-columns: repeat(auto-fit, @(previewCardSize)px);
+                            grid-template-columns: repeat(auto-fit, 180px);
                             @* grid-gap: 17px; *@
-                            grid-gap: @(previewGridSpacing)px;
+                            grid-gap: 5px;
                             }
 
                             .content-container .item img {
-                            width: @(previewCardSize)px;
-                            height: @(previewCardSize)px;
+                            width: 180px;
+                            height: 180px;
                             }
 
                             .content-container .item {
-                            width: @(previewCardSize)px;
+                            width: 180px;
                             }
 
         @@media only screen and (min-width: 992px) {
