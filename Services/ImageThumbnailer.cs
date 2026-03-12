@@ -346,8 +346,8 @@ public class ImageThumbnailer {
 
             int faceAreaThreshold = 0;
             if(faces.Count() > 1) {
-                var largestFaceArea = _getArea(faces.First());
-                var smallestFaceArea = _getArea(faces.Last());
+                var largestFaceArea = _getArea(facesByArea.First());
+                var smallestFaceArea = _getArea(facesByArea.Last());
 
                 faceAreaThreshold = (int)Math.Floor(smallestFaceArea + (largestFaceArea - smallestFaceArea) / 2);
                 faceAreaThreshold = (int)Math.Floor(faceAreaThreshold * 0.75);
@@ -355,7 +355,7 @@ public class ImageThumbnailer {
 
             var facesInPeopleBoundaries = faces
                 .Where(f => _getArea(f) >= faceAreaThreshold)
-                .Where(f => people.Any(p => f.Box.Left >= p.Box.Left && f.Box.Right <= p.Box.Right && f.Box.Top >= p.Box.Top && f.Box.Bottom <= p.Box.Bottom));
+                .Where(f => people.Any(p => _areOverlapping(f, p)));
 
             if(facesInPeopleBoundaries.Any()) {
                 return facesInPeopleBoundaries
@@ -363,9 +363,10 @@ public class ImageThumbnailer {
                     .AsEnumerable();
             }
 
-            if(people.Any()) {
-                return people.Select(p => p.Box).AsEnumerable();
-            }
+            return faces
+                .Where(f => _getArea(f) >= faceAreaThreshold)
+                .Select(f => f.Box)
+                .AsEnumerable();
         }
 
         if(people.Any()) {
@@ -377,7 +378,7 @@ public class ImageThumbnailer {
 
     public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
         List<Prediction> predictions = new();
-        foreach(var detector in _objectDetectors){
+        foreach(var detector in _objectDetectors) {
             predictions.AddRange(detector.FindObjects(srcImage));
         }
 
@@ -389,15 +390,16 @@ public class ImageThumbnailer {
         // Annotate faces
         if(annotateImage) {
             var pen = Pens.Solid(Color.GreenYellow, 2);
+            var predictionPen = Pens.Dot(Color.Yellow, 2);
+
+            foreach(var prediction in predictions) {
+                if(!cropTargets.Any(t => t == prediction.Box)) {
+                    srcImage.Mutate(i => i.Draw(predictionPen, _rectangle(prediction.Box)));
+                }
+            }
+
             foreach(var box in cropTargets) {
-                var faceX = (int)Math.Floor((box.Left));
-                var faceWidth = (int)Math.Floor(box.Width);
-
-                var faceY = (int)Math.Floor((box.Top));
-                var faceHeight = (int)Math.Floor(box.Height);
-
-                var rectangle = new Rectangle(faceX, faceY, faceWidth, faceHeight);
-                srcImage.Mutate(i => i.Draw(pen, rectangle));
+                srcImage.Mutate(i => i.Draw(pen, _rectangle(box)));
             }
         }
 
@@ -425,6 +427,11 @@ public class ImageThumbnailer {
             int srcFaceBottom = _mostBottomFace + faceMargin;
             var srcFaceWidth = srcFaceRight - srcFaceLeft;
             var srcFaceHeight = srcFaceBottom - srcFaceTop;
+
+            if(annotateImage) {
+                var pen = Pens.Solid(Color.Green, 2);
+                srcImage.Mutate(i => i.Draw(pen, new Rectangle(srcFaceLeft, srcFaceTop, srcFaceWidth, srcFaceHeight)));
+            }
 
             var smallestDimension = Math.Min(srcWidth, srcHeight);
             if(smallestDimension < boundingBoxWidth || smallestDimension < boundingBoxHeight) {
@@ -541,4 +548,10 @@ public class ImageThumbnailer {
 
     private static float _getArea(Prediction prediction) =>
         _getArea(prediction.Box);
+
+    private static RectangleF _rectangle(Box box) =>
+        new RectangleF(box.Left, box.Top, box.Width, box.Height);
+
+    private static bool _areOverlapping(Prediction a, Prediction b) =>
+        a.Box.Left >= b.Box.Left && a.Box.Right <= b.Box.Right && a.Box.Top >= b.Box.Top && a.Box.Bottom <= b.Box.Bottom;
 }
