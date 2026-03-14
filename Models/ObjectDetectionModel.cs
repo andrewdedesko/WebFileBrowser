@@ -10,7 +10,9 @@ public class Prediction {
 public enum DetectedObjectClass {
     Unknown,
     Face,
-    Person
+    Person,
+    Animal,
+    Furniture
 }
 
 public record Box {
