@@ -1,6 +1,13 @@
 @model BrowseDirectoryViewModel
 @{
     ViewData["Title"] = Model.Name;
+
+    int previewCardSize = (int)ViewData["PreviewGridCardSize"];
+    int previewGridWidth = 1296;
+
+    int cardsPerRow = (int)Math.Floor((double)previewGridWidth / (double)previewCardSize);
+    int previewGridSpacing = (int)Math.Floor((double)(previewGridWidth - (previewCardSize * cardsPerRow)) / (cardsPerRow -
+    1));
 }
 
 <div class="row">
@@ -51,6 +58,10 @@
                 class="btn btn-sm btn-primary" role="button">View Images</a>
         }
 
+        <div class="btn-group float-end">
+                <a href="#" onclick="return false;" class="btn btn-sm btn-secondary">...</a>
+        </div>
+        
         <div class="btn-group float-end" role="group">
             <a href="@Url.Action("RefreshThumbnail", "Browse", new { share = Model.Share, path = Model.Path })"
                 class="btn btn-sm btn-secondary" role="button">Refresh Thumbnail</a>
@@ -63,41 +74,10 @@
 
 <div class="row">
     <div class="column">
-        @if(Model.Directories.Any()){
-            <ul class="file-list">
-                @foreach(var dir in Model.Directories){
-                            <li>
-                                <svg bootstrap-icon="Folder" width="24" height="24" aria-label="Folder"></svg><a href="@Url.Action("Index", "Browse", new {share = dir.Share, path = dir.Path, view = dir.ViewType})">@dir.Name</a>
-                            </li>
-                }
-            </ul>
-        }
-
-        @if(Model.Files.Any(f => f.IsVideo)){
-                <ul class="file-list">
-                    @foreach (var file in Model.Files.Where(f => f.IsVideo))
-                    {
-                        
-                        <li><a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"
-                                    asp-route-path="@file.Path">@file.Name</a></li>
-                    }
-                </ul>
-        }
-
-        @if(Model.Files.Any(f => f.IsImage)){
-            <ul class="file-list">
-                @foreach(var file in Model.Files.Where(f => f.IsImage)){
-                    <li><a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share" asp-route-path="@Model.Path" asp-route-image="@file.Name">@file.Name</a></li>    
-                }
-            </ul>
-        }
-
-        @if(Model.Files.Any(f => !f.IsImage && !f.IsVideo)){
-            <ul class="file-list">
-                @foreach(var file in Model.Files.Where(f => !f.IsImage && !f.IsVideo)){
-                    <li>@file.Name</li>
-                }
-            </ul>
+        @if(Model.ViewType == "Thumbnails"){
+            @await Html.PartialAsync("_IndexPreview", Model)
+        }else{
+            @await Html.PartialAsync("_IndexList", Model)
         }
     </div>
 </div>
@@ -120,5 +100,109 @@
         .file-list a{
             color: ;
         }
+    </style>
+
+    <style>
+        section{
+            margin-bottom: 60px;
+        }
+
+        section h2{
+            padding-bottom: 20px;
+        }
+
+        .content-container {
+            display: grid;
+        }
+
+        .content-container .item {
+            text-align: center;
+            background-color: #15181a;
+        }
+
+        .content-container .item a.item-link {
+            color: #f0f0f0;
+            text-decoration: none;
+            display: block;
+        }
+
+        .content-container .item figure {
+            margin: 0;
+        }
+
+        .content-container .item footer {
+            padding: 14px 14px;
+            letter-spacing: 1px;
+            margin: 0;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .content-container .item img {
+            object-fit: contain;
+            image-orientation: none;
+            background-color: #0c0e0f;
+        }
+
+        @* .content-container .item {
+            width: 160px;
+        }
+
+        .content-container .item img {
+            width: 160px;
+            height: 160px;
+        }
+
+        .content-container {
+            grid-template-columns: repeat(auto-fit, 160px);
+            grid-gap: 14px;
+        } *@
+
+        @* @@media only screen and (min-width: 576px){
+            .content-container{
+                .grid-gap: 17px;
+            }
+        } *@
+
+                            .content-container {
+                            grid-template-columns: repeat(auto-fit, 180px);
+                            @* grid-gap: 17px; *@
+                            grid-gap: 5px;
+                            }
+
+                            .content-container .item img {
+                            width: 180px;
+                            height: 180px;
+                            }
+
+                            .content-container .item {
+                            width: 180px;
+                            }
+
+        @@media only screen and (min-width: 992px) {
+            .content-container {
+                grid-template-columns: repeat(auto-fit, @(previewCardSize)px);
+                @* grid-gap: 17px; *@
+                grid-gap: @(previewGridSpacing)px;
+            }
+
+            .content-container .item img {
+                width: @(previewCardSize)px;
+                height: @(previewCardSize)px;
+            }
+
+            .content-container .item {
+                width: @(previewCardSize)px;
+            }
+        }
+
+        @* @@media only screen and (min-width: 1081px) {
+            .content-container {
+                grid-template-columns: repeat(auto-fit, 240px);
+                grid-gap: 24px;
+            }
+        } *@
     </style>
 }

@@ -1,0 +1,83 @@
+@model BrowseDirectoryViewModel
+@{
+    int previewCardSize = (int)ViewData["PreviewGridCardSize"];
+    int previewGridWidth = 1296;
+
+    int cardsPerRow = (int)Math.Floor((double)previewGridWidth / (double)previewCardSize);
+    int previewGridSpacing = (int)Math.Floor((double)(previewGridWidth - (previewCardSize * cardsPerRow)) / (cardsPerRow -
+1));
+}
+
+@if(Model.Directories.Any()){
+<section>
+    <div class="content-container">
+        @foreach (var dir in Model.Directories)
+        {
+            <article class="item">
+                <a href="@Url.Action("Index", "Browse", new { share = dir.Share, path = dir.Path, view = dir.ViewType })"
+                       class="item-link">
+                    <figure>
+                        <img src="@Url.Action("Thumbnail", "Browse", new { share = dir.Share, path = dir.Path, size = previewCardSize })"
+                             loading="lazy" />
+                    </figure>
+                    <footer>
+                        <span title="@dir.Name">@dir.Name</span>
+                    </footer>
+                </a>
+            </article>
+        }
+    </div>
+</section>
+}
+
+@if (Model.Files.Any(f => f.IsVideo))
+{
+    <section>
+        <h2>Videos</h2>
+        <div class="content-container">
+            @foreach (var file in Model.Files)
+            {
+
+                @if (file.IsVideo)
+                {
+                    <article class="item">
+                        <a asp-controller="Browse" asp-action="ViewVideo" asp-route-share="@file.Share"           asp-route-path="@file.Path"
+                               class="item-link">
+                            <figure>
+                                <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path, size = previewCardSize })"
+                                     loading="lazy" />
+                            </figure>
+                            <footer>
+                                <span title="@file.Name">@file.Name</span>
+                            </footer>
+                        </a>
+                    </article>
+                }
+            }
+        </div>
+    </section>
+}
+
+@if(Model.Files.Any(f => f.IsImage)){
+<section>
+    <div class="content-container">
+        @foreach (var file in Model.Files)
+        {
+
+            @if (file.IsImage)
+            {
+                <article class="item">
+                    <a asp-controller="Browse" asp-action="ViewImages" asp-route-share="@Model.Share"
+                            asp-route-path="@Model.Path" asp-route-image="@file.Name" class="item-link">
+                        <figure>
+                            <img src="@Url.Action("Thumbnail", "Browse", new { share = file.Share, path = file.Path, size = previewCardSize })"
+                                    title="@file.Name" loading="lazy" />
+                        </figure>
+                    </a>
+                </article>
+            }
+        }
+    </div>
+</section>
+}
+
