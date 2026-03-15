@@ -389,7 +389,7 @@ public class ImageThumbnailer {
 
         // Annotate faces
         if(annotateImage) {
-            var pen = Pens.Solid(Color.GreenYellow, 2);
+            var pen = Pens.Solid(Color.SeaGreen, 2);
             var predictionPen = Pens.Dot(Color.Yellow, 2);
 
             foreach(var prediction in predictions) {
@@ -429,7 +429,7 @@ public class ImageThumbnailer {
             var srcFaceHeight = srcFaceBottom - srcFaceTop;
 
             if(annotateImage) {
-                var pen = Pens.Solid(Color.Green, 2);
+                var pen = Pens.Dash(Color.HotPink, 2);
                 srcImage.Mutate(i => i.Draw(pen, new Rectangle(srcFaceLeft, srcFaceTop, srcFaceWidth, srcFaceHeight)));
             }
 
@@ -464,11 +464,6 @@ public class ImageThumbnailer {
 
                 srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, imageMarginLower, imageMarginUpper);
 
-                if(annotateImage) {
-                    var centreLinePen = Pens.Solid(Color.AliceBlue);
-                    srcImage.Mutate(i => i.Draw(centreLinePen, new Rectangle(0, srcFaceCentre, srcWidth, 2)));
-                }
-
                 int cropFaceCentre = (int)Math.Floor(smallestDimension * srcFaceCentrePercentage);
                 cropTop = srcFaceCentre - cropFaceCentre;
                 if(cropTop < 0) {
@@ -480,10 +475,10 @@ public class ImageThumbnailer {
                 }
             }
 
-            var cropPen = Pens.Dash(Color.MediumVioletRed, 2);
             var cropRectangle = new Rectangle(cropLeft, cropTop, smallestDimension, smallestDimension);
 
             if(annotateImage) {
+                var cropPen = Pens.Dash(Color.MediumVioletRed, 2);
                 srcImage.Mutate(i => i.Draw(cropPen, cropRectangle));
             } else {
                 srcImage.Mutate(i => i.Crop(cropRectangle));
