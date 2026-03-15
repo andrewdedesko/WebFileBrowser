@@ -11,15 +11,15 @@ namespace WebFileBrowser.Controllers;
 public class ThumbnailController : Controller {
     private readonly IShareService _shareService;
     private readonly ImageThumbnailer _imageThumbnailer;
+    private readonly ThumbnailAutoCropper _thumbnailAutoCropper;
 
-    public ThumbnailController(ImageThumbnailer imageThumbnailer, IShareService shareService) {
+    public ThumbnailController(ImageThumbnailer imageThumbnailer, IShareService shareService, ThumbnailAutoCropper thumbnailAutoCropper) {
         _imageThumbnailer = imageThumbnailer;
         _shareService = shareService;
+        _thumbnailAutoCropper = thumbnailAutoCropper;
     }
 
     public IActionResult Index(string share, string path, int size = 800) {
-        // var image = _imageThumbnailer.GetDirectoryThumbnailImageFromMiddleImageAndPreferImagesWithFaces(share, path, size, annotateImage: true);
-
         using var image = Image.Load<Rgb24>(_shareService.GetPath(share, path));
         
         int resizedWidth = 0;
@@ -31,7 +31,7 @@ public class ThumbnailController : Controller {
         }
         image.Mutate(i => i.Resize(resizedWidth, resizedHeight));
 
-        _imageThumbnailer.CropImageToSquareAroundFace(image, annotateImage: true);
+        _thumbnailAutoCropper.CropImageToSquareAroundFace(image, annotateImage: true);
 
         if(image != null){
             var imageBytes = _imageThumbnailer.GetImageAsBytes(image);

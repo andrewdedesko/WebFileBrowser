@@ -11,14 +11,16 @@ public class DirectoryThumbnailer {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
     private readonly IFileTypeService _fileTypeService;
+    private readonly ThumbnailAutoCropper _thumbnailAutoCropper;
     private readonly ILogger<DirectoryThumbnailer> _logger;
 
-    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ILogger<DirectoryThumbnailer> logger) {
+    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ThumbnailAutoCropper thumbnailAutoCropper, ILogger<DirectoryThumbnailer> logger) {
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
         _shareService = shareService;
+        _thumbnailAutoCropper = thumbnailAutoCropper;
         _logger = logger;
     }
 
@@ -28,7 +30,7 @@ public class DirectoryThumbnailer {
             return null;
         }
 
-        _imageThumbnailer.CropImageToSquareAroundFace(image);
+        _thumbnailAutoCropper.CropImageToSquareAroundFace(image);
         _imageThumbnailer.ScaleImageToThumbnail(image, size);
         return _imageThumbnailer.GetImageAsBytes(image);
     }
