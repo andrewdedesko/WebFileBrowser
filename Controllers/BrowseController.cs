@@ -123,7 +123,7 @@ public class BrowseController : Controller
             gridSize = 240;
         }
         ViewData["PreviewGridCardSize"] = gridSize;
-        return View(viewName, new BrowseDirectoryViewModel()
+        return View(new BrowseDirectoryViewModel()
         {
             Name = Path.GetFileName(dirPath),
             Share = share,
