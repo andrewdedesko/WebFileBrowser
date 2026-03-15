@@ -552,6 +552,23 @@ public class ImageThumbnailer {
     private static RectangleF _rectangle(Box box) =>
         new RectangleF(box.Left, box.Top, box.Width, box.Height);
 
-    private static bool _areOverlapping(Prediction a, Prediction b) =>
-        a.Box.Left >= b.Box.Left && a.Box.Right <= b.Box.Right && a.Box.Top >= b.Box.Top && a.Box.Bottom <= b.Box.Bottom;
+    private static bool _areOverlapping(Prediction a, Prediction b) {
+        return _getOverlappingPercentage(a.Box, b.Box) >= 0.75;
+    }
+
+    private static float _getOverlappingPercentage(Box a, Box b) {
+        var overlappingArea = _getOverlappingArea(a, b);
+        var smallestArea = Math.Min(_getArea(a), _getArea(b));
+        return overlappingArea / smallestArea;
+    }
+
+    private static float _getOverlappingArea(Box a, Box b) {
+        float left = Math.Max(a.Left, b.Left);
+        float right = Math.Min(a.Right, b.Right);
+
+        float top = Math.Max(a.Top, b.Top);
+        float bottom = Math.Min(a.Bottom, b.Bottom);
+
+        return Math.Max(0, right - left) * Math.Max(0, bottom - top);
+    }
 }
