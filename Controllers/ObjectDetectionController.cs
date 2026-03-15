@@ -41,23 +41,24 @@ public class ObjectDetectionController : Controller {
             const float fontSize = 14f;
             var font = _getFont(fontSize);
 
-            Dictionary<string, Color> classColors = new();
-            classColors.Add("face", Color.SeaGreen);
-            classColors.Add("person", Color.SeaGreen);
-            classColors.Add("head_neck_face", Color.SeaGreen);
+            Dictionary<DetectedObjectClass, Color> classColors = new();
+            classColors.Add(DetectedObjectClass.Face, Color.SeaGreen);
+            classColors.Add(DetectedObjectClass.Person, Color.SeaGreen);
+            classColors.Add(DetectedObjectClass.Animal, Color.AliceBlue);
+            classColors.Add(DetectedObjectClass.Furniture, Color.Orange);
 
-            var foundObjects = predictions.Select(p => $"{p.Label}: {p.Confidence}").ToArray();
+            // var foundObjects = predictions.Select(p => $"{p.Label}: {p.Confidence}").ToArray();
             foreach(var p in predictions) {
                 var labelClass = p.Label;
                 Color color;
-                if(classColors.ContainsKey(labelClass)) {
-                    color = classColors[labelClass];
+                if(classColors.ContainsKey(p.ObjectClass)) {
+                    color = classColors[p.ObjectClass];
                 } else {
                     color = Color.Green;
                 }
                 var pen = Pens.Solid(color, 4);
 
-                var label = $"{labelClass} ({p.Confidence})";
+                var label = $"{labelClass}";
 
                 FontRectangle size = TextMeasurer.MeasureBounds(label, new TextOptions(font));
                 var textLocation = new PointF(p.Box.Left, p.Box.Top);
