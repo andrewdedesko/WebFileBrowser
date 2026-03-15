@@ -208,7 +208,7 @@ public class BrowseController : Controller
     public async Task<IActionResult> Thumbnail(string share, string path, int size = 240, bool cache = true)
     {
         try{
-            var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path, size, cache);
+            var thumbnail = await _imageThumbnailService.GetImageThumbnail(share, path, size, cache, fast: true);
             return File(thumbnail, _imageThumbnailService.GetThumbnailImageMimeType());
         } catch(ThumbnailNotAvailableException) {
             return NotFound();

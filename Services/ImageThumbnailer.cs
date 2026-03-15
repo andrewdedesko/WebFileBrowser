@@ -93,6 +93,9 @@ public class ImageThumbnailer {
         }
     }
 
+    public byte[] GetImageAsBytes(ThumbnailImage image) =>
+        GetImageAsBytes(image.Image);
+
     public byte[] GetImageAsBytes(Image image) =>
         _GetImageAsWebpBytes(image);
 
@@ -114,6 +117,10 @@ public class ImageThumbnailer {
 
         var thumbnailData = thumbnailImageStream.ToArray();
         return thumbnailData;
+    }
+
+    public void ScaleImageToThumbnail(ThumbnailImage image, int size) {
+        ScaleImageToThumbnail(image.Image, size);
     }
 
     public void ScaleImageToThumbnail(Image image, int size) {

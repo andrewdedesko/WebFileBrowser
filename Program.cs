@@ -24,6 +24,7 @@ builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
 builder.Services.AddSingleton<ImageThumbnailer>();
 builder.Services.AddSingleton<VideoThumbnailer>();
 builder.Services.AddSingleton<DirectoryThumbnailer>();
+builder.Services.AddSingleton<ThumbnailAutoCropper>();
 builder.Services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
 builder.Services.AddSingleton<ThumbnailBackgroundProcessingService>();
 builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailBackgroundProcessingService>());
