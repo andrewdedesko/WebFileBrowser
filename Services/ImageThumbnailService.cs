@@ -10,6 +10,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     private readonly ImageThumbnailer _imageThumbnailer;
     private readonly VideoThumbnailer _videoThumbnailer;
     private readonly DirectoryThumbnailer _directoryThumbnailer;
+    private readonly ThumbnailAutoCropper _thumbnailAutoCropper;
     private readonly IDistributedCache _cache;
     private readonly BackgroundThumbnailQueue _backgroundThumbnailQueue;
     private readonly ILogger<ImageThumbnailService> _logger;
@@ -20,20 +21,21 @@ public class ImageThumbnailService : IImageThumbnailService {
 
     private readonly int[] _allowedThumbnailCacheSizes = { 240, 280, 300, 340 };
 
-    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer, BackgroundThumbnailQueue backgroundThumbnailQueue) {
+    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer, BackgroundThumbnailQueue backgroundThumbnailQueue, ThumbnailAutoCropper thumbnailAutoCropper) {
         _shareService = shareService;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
         _thumbnailQueue = thumbnailQueue;
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
-        _cache = cache;
-        _logger = logger;
         _directoryThumbnailer = directoryThumbnailer;
+        _thumbnailAutoCropper = thumbnailAutoCropper;
+        _cache = cache;
         _backgroundThumbnailQueue = backgroundThumbnailQueue;
+        _logger = logger;
     }
 
-    public async Task<byte[]> GetImageThumbnail(string share, string path, int size, bool useCache = true, bool refreshCache = false) {
+    public async Task<byte[]> GetImageThumbnail(string share, string path, int size, bool useCache = true, bool refreshCache = false, bool fast = true) {
         if(useCache && !refreshCache) {
             byte[]? cachedThumbnail = await FindCachedThumbnailAsync(share, path, size);
             if(cachedThumbnail != null) {
@@ -47,7 +49,22 @@ public class ImageThumbnailService : IImageThumbnailService {
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
-            data = _directoryThumbnailer.FindThumbnail(share, path, size);
+            var thumbnailImage = _directoryThumbnailer.FindThumbnail(share, path);
+
+            if(thumbnailImage != null) {
+                if(!fast) {
+                    _thumbnailAutoCropper.CropImageToSquareAroundFace(thumbnailImage);
+                } else {
+                    cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                    await _backgroundThumbnailQueue.EnqueueAsync(new ThumbnailTask() {
+                        Share = share,
+                        Path = path
+                    });
+                }
+
+                _imageThumbnailer.ScaleImageToThumbnail(thumbnailImage, size);
+                data = _imageThumbnailer.GetImageAsBytes(thumbnailImage);
+            }
 
         } else if(!File.Exists(filePath)) {
             throw new Exception($"Cannot choose a thumbnailer for {filePath} because the file does not exist");

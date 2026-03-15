@@ -18,7 +18,7 @@ public class ThumbnailBackgroundProcessingService : BackgroundService {
             var t = await _queue.DequeueAsync(stoppingToken);
             _logger.LogTrace($"Processing thumbnail for {t.Share}:{t.Path}");
             try {
-                await _imageThumbnailService.GetImageThumbnail(t.Share, t.Path, refreshCache: true);
+                await _imageThumbnailService.GetImageThumbnail(t.Share, t.Path, refreshCache: true, fast: false);
             } catch(Exception ex) {
                 _logger.LogError($"Failed to generate thumbnail for {t.Share}:{t.Path}", ex);
                 continue;

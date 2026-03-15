@@ -58,6 +58,10 @@ public class ThumbnailAutoCropper {
         return Enumerable.Empty<Box>();
     }
 
+    public void CropImageToSquareAroundFace(ThumbnailImage thumbnailImage, bool annotateImage = false) {
+        CropImageToSquareAroundFace(thumbnailImage.Image, annotateImage: annotateImage);
+    }
+
     public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
         List<Prediction> predictions = new();
         foreach(var detector in _objectDetectors) {

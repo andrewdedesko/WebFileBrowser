@@ -11,28 +11,24 @@ public class DirectoryThumbnailer {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
     private readonly IFileTypeService _fileTypeService;
-    private readonly ThumbnailAutoCropper _thumbnailAutoCropper;
     private readonly ILogger<DirectoryThumbnailer> _logger;
 
-    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ThumbnailAutoCropper thumbnailAutoCropper, ILogger<DirectoryThumbnailer> logger) {
+    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ILogger<DirectoryThumbnailer> logger) {
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
         _shareService = shareService;
-        _thumbnailAutoCropper = thumbnailAutoCropper;
         _logger = logger;
     }
 
-    public byte[]? FindThumbnail(string share, string path, int size) {
+    public ThumbnailImage? FindThumbnail(string share, string path) {
         var image = _findThumbnail(share, path);
         if(image == null) {
             return null;
         }
 
-        _thumbnailAutoCropper.CropImageToSquareAroundFace(image);
-        _imageThumbnailer.ScaleImageToThumbnail(image, size);
-        return _imageThumbnailer.GetImageAsBytes(image);
+        return new ThumbnailImage(image);
     }
 
     private Image<Rgb24>? _findThumbnail(string share, string path) {
