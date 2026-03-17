@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using WebFileBrowser.Extensions;
 using WebFileBrowser.Services;
 
 namespace WebFileBrowser.Controllers;
@@ -21,11 +22,13 @@ public class ThumbnailController : Controller {
 
     public IActionResult Index(string share, string path, int size = 800) {
         using var image = Image.Load<Rgb24>(_shareService.GetPath(share, path));
-        
-        int resizedWidth = 0;
-        int resizedHeight = 0;
-        if(image.Width >= image.Height) {
-            resizedWidth = size;
+        image.ResizeImageToMaxDimension(size);
+
+        _thumbnailAutoCropper.CropImageToSquareAroundFace(image, annotateImage: true);
+
+        var imageBytes = _imageThumbnailer.GetImageAsBytes(image);
+        return File(imageBytes, "image/webp");
+    }
         } else {
             resizedHeight = size;
         }

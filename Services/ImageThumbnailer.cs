@@ -3,6 +3,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using WebFileBrowser.Models;
+using WebFileBrowser.Extensions;
 
 namespace WebFileBrowser.Services;
 
@@ -124,14 +125,6 @@ public class ImageThumbnailer {
     }
 
     public void ScaleImageToThumbnail(Image image, int size) {
-        var width = 0;
-        var height = 0;
-
-        if(image.Width > image.Height) {
-            width = size;
-        } else {
-            height = size;
-        }
-        image.Mutate(x => x.Resize(width, height));
+        image.ResizeImageToMaxDimension(size);
     }
 }
