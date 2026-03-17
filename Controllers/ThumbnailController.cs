@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -29,18 +30,44 @@ public class ThumbnailController : Controller {
         var imageBytes = _imageThumbnailer.GetImageAsBytes(image);
         return File(imageBytes, "image/webp");
     }
-        } else {
-            resizedHeight = size;
-        }
-        image.Mutate(i => i.Resize(resizedWidth, resizedHeight));
 
-        _thumbnailAutoCropper.CropImageToSquareAroundFace(image, annotateImage: true);
+    public IActionResult Auto(string share, string path, int size = 800) {
+        using var image = Image.Load<Rgb24>(_shareService.GetPath(share, path));
 
-        if(image != null){
+        _thumbnailAutoCropper.CropImageToSquareAroundFace(image);
+        image.ResizeImageToMaxDimension(size);
+
+        if(image != null) {
             var imageBytes = _imageThumbnailer.GetImageAsBytes(image);
             return File(imageBytes, "image/webp");
         } else {
             return NotFound();
         }
+    }
+
+    public IActionResult Portrait(string share, string path, int size = 800) {
+        using var image = Image.Load<Rgb24>(_shareService.GetPath(share, path));
+
+        var portraitCropResult = _thumbnailAutoCropper.CropImageToPortrait(image);
+        image.ResizeImageToMaxDimension(size);
+
+        if(portraitCropResult != null) {
+            const float fontSize = 14f;
+            var font = _getFont(fontSize);
+            image.Mutate(x => x.DrawTextWithBackground($"Portrait Crop [Score: {portraitCropResult.Score}]", font, Color.WhiteSmoke, Color.Black, 10, 10));
+        }
+
+        if(image != null) {
+            var imageBytes = _imageThumbnailer.GetImageAsBytes(image);
+            return File(imageBytes, "image/webp");
+        } else {
+            return NotFound();
+        }
+    }
+
+    private static Font _getFont(float size) {
+        FontCollection fontCollection = new();
+        var family = fontCollection.Add("JetBrainsMono-Regular.ttf");
+        return family.CreateFont(size, FontStyle.Regular);
     }
 }

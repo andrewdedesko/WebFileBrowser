@@ -2,6 +2,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using WebFileBrowser.Extensions;
 using WebFileBrowser.Models;
 using WebFileBrowser.Services.ObjectDetection;
 
@@ -56,6 +57,283 @@ public class ThumbnailAutoCropper {
         }
 
         return Enumerable.Empty<Box>();
+    }
+
+    private Box? _findPortraitCropV1(IEnumerable<Prediction> predictions, int imageWidth, int imageHeight) {
+        var predList = predictions.ToList();
+
+        // Gather face and person predictions, filtered by confidence
+        var faces = predList
+            .Where(p => p.ObjectClass == DetectedObjectClass.Face && p.Confidence >= 0.5f)
+            .OrderByDescending(p => p.Confidence)
+            .ToList();
+
+        var people = predList
+            .Where(p => p.ObjectClass == DetectedObjectClass.Person && p.Confidence >= 0.5f)
+            .OrderByDescending(p => p.Confidence)
+            .ToList();
+
+        // No usable detections at all — bail out
+        if(faces.Count == 0 && people.Count == 0)
+            return null;
+
+        // --- Determine the region of interest (ROI) ---
+        // Strategy:
+        //   1. If we have 1–2 faces, build the ROI from those faces alone.
+        //      The face bounding boxes are tight, so we'll add headroom/padding below.
+        //   2. If we have no faces but have a person box, fall back to the upper
+        //      portion of that box (head/shoulders area).
+        //   3. If we have 3+ faces (group shot), skip — no reliable single crop.
+
+        Box roi;
+
+        if(faces.Count >= 1 && faces.Count <= 2) {
+            // Union of all face boxes
+            float faceLeft = faces.Min(f => f.Box.Xmin);
+            float faceTop = faces.Min(f => f.Box.Ymin);
+            float faceRight = faces.Max(f => f.Box.Xmax);
+            float faceBottom = faces.Max(f => f.Box.Ymax);
+
+            float faceUnionWidth = faceRight - faceLeft;
+            float faceUnionHeight = faceBottom - faceTop;
+
+            // Add padding around the face union so the crop doesn't feel too tight.
+            // For a portrait we want a little more room below the chin than above
+            // the forehead, and comfortable side margins.
+            float padX = faceUnionWidth * 0.5f;   // 50% of face width on each side
+            float padTop = faceUnionHeight * 0.6f;   // 60% above (forehead / hair room)
+            float padBottom = faceUnionHeight * 0.8f;   // 80% below (chin / neck room)
+
+            // If we also have a person box that contains these faces, clamp the
+            // bottom of the ROI to the person box so we don't bleed into another subject.
+            float? personBottom = null;
+            if(people.Count > 0) {
+                // Find the person box most likely to belong to this face
+                var matchingPerson = people
+                    .Where(p =>
+                        p.Box.Xmin <= faceRight && p.Box.Xmax >= faceLeft &&  // overlaps horizontally
+                        p.Box.Ymin <= faceBottom)                              // starts above face bottom
+                    .OrderByDescending(p => p.Confidence)
+                    .FirstOrDefault();
+
+                if(matchingPerson != null)
+                    personBottom = matchingPerson.Box.Ymax;
+            }
+
+            float roiBottom = Math.Min(faceBottom + padBottom, personBottom ?? float.MaxValue);
+
+            roi = new Box(
+                xmin: faceLeft - padX,
+                ymin: faceTop - padTop,
+                xmax: faceRight + padX,
+                ymax: roiBottom
+            );
+        } else if(faces.Count == 0 && people.Count > 0) {
+            // No face detected — use the upper ~55% of the best person box as a
+            // rough head-and-shoulders region.
+            var person = people.First();
+            float headHeight = person.Box.Height * 0.55f;
+
+            roi = new Box(
+                xmin: person.Box.Xmin,
+                ymin: person.Box.Ymin,
+                xmax: person.Box.Xmax,
+                ymax: person.Box.Ymin + headHeight
+            );
+        } else {
+            // 3+ faces (group photo) or some other unhandled case — no reliable crop
+            return null;
+        }
+
+        // --- Convert the ROI into a square crop (1:1 aspect ratio) ---
+        // Expand the shorter axis to match the longer one, keeping the crop centred
+        // on the ROI's centre point.
+        float roiWidth = roi.Xmax - roi.Xmin;
+        float roiHeight = roi.Ymax - roi.Ymin;
+        float side = Math.Max(roiWidth, roiHeight);
+
+        float centerX = roi.Xmin + roiWidth / 2f;
+        float centerY = roi.Ymin + roiHeight / 2f;
+
+        // Bias the vertical centre upward slightly so the face sits in the upper-
+        // middle of the square rather than dead-centre (more natural for portraits).
+        centerY -= side * 0.05f;
+
+        var squareCrop = new Box(
+            xmin: centerX - side / 2f,
+            ymin: centerY - side / 2f,
+            xmax: centerX + side / 2f,
+            ymax: centerY + side / 2f
+        );
+
+        return squareCrop;
+    }
+
+    private PortraitCropResult? _findPortraitCropV2(IEnumerable<Prediction> predictions, int imageWidth, int imageHeight) {
+        var predList = predictions.ToList();
+
+        var faces = predList
+            .Where(p => p.ObjectClass == DetectedObjectClass.Face && p.Confidence >= 0.5f)
+            .OrderByDescending(p => p.Confidence)
+            .ToList();
+
+        var people = predList
+            .Where(p => p.ObjectClass == DetectedObjectClass.Person && p.Confidence >= 0.5f)
+            .OrderByDescending(p => p.Confidence)
+            .ToList();
+
+        if(faces.Count == 0 && people.Count == 0)
+            return null;
+
+        // -------------------------------------------------------------------------
+        // 1. Build a region of interest (ROI)
+        // -------------------------------------------------------------------------
+
+        Box roi;
+        float baseScore;
+
+        if(faces.Count >= 1 && faces.Count <= 2) {
+            float faceLeft = faces.Min(f => f.Box.Xmin);
+            float faceTop = faces.Min(f => f.Box.Ymin);
+            float faceRight = faces.Max(f => f.Box.Xmax);
+            float faceBottom = faces.Max(f => f.Box.Ymax);
+
+            float faceUnionWidth = faceRight - faceLeft;
+            float faceUnionHeight = faceBottom - faceTop;
+
+            float padX = faceUnionWidth * 0.5f;
+            float padTop = faceUnionHeight * 0.6f;
+            float padBottom = faceUnionHeight * 0.8f;
+
+            float? personBottom = null;
+            if(people.Count > 0) {
+                var matchingPerson = people
+                    .Where(p =>
+                        p.Box.Xmin <= faceRight && p.Box.Xmax >= faceLeft &&
+                        p.Box.Ymin <= faceBottom)
+                    .OrderByDescending(p => p.Confidence)
+                    .FirstOrDefault();
+
+                if(matchingPerson != null)
+                    personBottom = matchingPerson.Box.Ymax;
+            }
+
+            float roiBottom = Math.Min(faceBottom + padBottom, personBottom ?? float.MaxValue);
+
+            roi = new Box(
+                xmin: faceLeft - padX,
+                ymin: faceTop - padTop,
+                xmax: faceRight + padX,
+                ymax: roiBottom
+            );
+
+            // Score: average face confidence, slightly discounted for two faces
+            // since a two-face crop is inherently less clean than a solo portrait
+            float avgFaceConfidence = faces.Average(f => f.Confidence);
+            baseScore = faces.Count == 1
+                ? avgFaceConfidence
+                : avgFaceConfidence * 0.85f;
+        } else if(faces.Count == 0 && people.Count > 0) {
+            var person = people.First();
+            float headHeight = person.Box.Height * 0.55f;
+
+            roi = new Box(
+                xmin: person.Box.Xmin,
+                ymin: person.Box.Ymin,
+                xmax: person.Box.Xmax,
+                ymax: person.Box.Ymin + headHeight
+            );
+
+            // No face detected — inherently lower confidence in the crop quality
+            baseScore = person.Confidence * 0.5f;
+        } else {
+            // 3+ faces
+            return null;
+        }
+
+        // -------------------------------------------------------------------------
+        // 2. Expand ROI to a square
+        // -------------------------------------------------------------------------
+
+        float roiWidth = roi.Xmax - roi.Xmin;
+        float roiHeight = roi.Ymax - roi.Ymin;
+        float side = Math.Max(roiWidth, roiHeight);
+
+        side = Math.Min(side, Math.Min(imageWidth, imageHeight));
+
+        float centerX = roi.Xmin + roiWidth / 2f;
+        float centerY = roi.Ymin + roiHeight / 2f;
+        centerY -= side * 0.05f;
+
+        float x1 = centerX - side / 2f;
+        float y1 = centerY - side / 2f;
+        float x2 = x1 + side;
+        float y2 = y1 + side;
+
+        // --- Zoom ---
+        // The ROI was padded generously to give context. Now shrink it back toward
+        // the face(s) so they fill the frame more. We target a zoom such that the
+        // face union occupies roughly 45% of the crop's side length — a natural
+        // portrait framing. We never zoom beyond that target, and we never produce
+        // a crop smaller than the face union itself (with a small safety margin).
+        if(faces.Count > 0) {
+            float faceUnionWidth = faces.Max(f => f.Box.Xmax) - faces.Min(f => f.Box.Xmin);
+            float faceUnionHeight = faces.Max(f => f.Box.Ymax) - faces.Min(f => f.Box.Ymin);
+            float faceUnionSize = Math.Max(faceUnionWidth, faceUnionHeight);
+
+            // How large should the square be so the face union is 45% of it?
+            const float targetFaceFraction = 0.45f;
+            float zoomedSide = faceUnionSize / targetFaceFraction;
+
+            // Only zoom in (shrink the crop), never zoom out beyond the padded ROI
+            // Also never go smaller than the face union + 20% safety margin
+            float minSide = faceUnionSize * 1.2f;
+            side = Math.Clamp(zoomedSide, minSide, side);
+
+            side = Math.Min(side, Math.Min(imageWidth, imageHeight));
+        }
+
+        // -------------------------------------------------------------------------
+        // 3. Slide the square inside the image bounds, measuring how much it had
+        //    to move so we can penalise heavily edge-clamped crops
+        // -------------------------------------------------------------------------
+
+        float preClampX1 = x1;
+        float preClampY1 = y1;
+
+        if(x1 < 0) { x2 -= x1; x1 = 0; } else if(x2 > imageWidth) { x1 -= (x2 - imageWidth); x2 = imageWidth; }
+
+        if(y1 < 0) { y2 -= y1; y1 = 0; } else if(y2 > imageHeight) { y1 -= (y2 - imageHeight); y2 = imageHeight; }
+
+        // -------------------------------------------------------------------------
+        // 4. Score penalty for edge clamping
+        //    Expressed as a fraction of the square's side length that was shifted.
+        //    A full-side shift would be a penalty of 1.0 (worst possible).
+        // -------------------------------------------------------------------------
+
+        float shiftX = Math.Abs(x1 - preClampX1);
+        float shiftY = Math.Abs(y1 - preClampY1);
+        float clampPenalty = Math.Min(1f, (shiftX + shiftY) / side);
+
+        float finalScore = baseScore * (1f - clampPenalty * 0.6f);
+        finalScore = Math.Clamp(finalScore, 0f, 1f);
+
+        var box = new Box(xmin: x1, ymin: y1, xmax: x2, ymax: y2);
+        return new PortraitCropResult(box, finalScore);
+    }
+
+    public PortraitCropResult? CropImageToPortrait(Image<Rgb24> image) {
+        List<Prediction> predictions = new();
+        foreach(var detector in _objectDetectors) {
+            predictions.AddRange(detector.FindObjects(image));
+        }
+
+        var cropResult = _findPortraitCropV2(predictions, image.Width, image.Height);
+        if(cropResult?.Box != null) {
+            image.Mutate(i => i.Crop(cropResult.Box.AsRectangle()));
+        }
+
+        return cropResult;
     }
 
     public void CropImageToSquareAroundFace(ThumbnailImage thumbnailImage, bool annotateImage = false) {
@@ -200,5 +478,6 @@ public class ThumbnailAutoCropper {
 
         return Math.Max(0, right - left) * Math.Max(0, bottom - top);
     }
-
 }
+
+public record PortraitCropResult(Box Box, float Score);
