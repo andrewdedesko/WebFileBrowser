@@ -15,17 +15,14 @@ public class ImageThumbnailService : IImageThumbnailService {
     private readonly BackgroundThumbnailQueue _backgroundThumbnailQueue;
     private readonly ILogger<ImageThumbnailService> _logger;
 
-    private readonly BackgroundThumbnailQueue _thumbnailQueue;
-
     private readonly string _thumbnailImageMimeType = "image/webp";
 
     private readonly int[] _allowedThumbnailCacheSizes = { 240, 280, 300, 340 };
 
-    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, BackgroundThumbnailQueue thumbnailQueue, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer, BackgroundThumbnailQueue backgroundThumbnailQueue, ThumbnailAutoCropper thumbnailAutoCropper) {
+    public ImageThumbnailService(IShareService shareService, IBrowseService browseService, IFileTypeService fileTypeService, IDistributedCache cache, ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, ILogger<ImageThumbnailService> logger, DirectoryThumbnailer directoryThumbnailer, BackgroundThumbnailQueue backgroundThumbnailQueue, ThumbnailAutoCropper thumbnailAutoCropper) {
         _shareService = shareService;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
-        _thumbnailQueue = thumbnailQueue;
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
         _directoryThumbnailer = directoryThumbnailer;
