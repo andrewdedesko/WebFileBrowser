@@ -48,7 +48,7 @@ public class ThumbnailController : Controller {
     public IActionResult Portrait(string share, string path, int size = 800) {
         using var image = Image.Load<Rgb24>(_shareService.GetPath(share, path));
 
-        var portraitCropResult = _thumbnailAutoCropper.CropImageToPortrait(image);
+        var portraitCropResult = _thumbnailAutoCropper.CropImageToPortrait(new Models.ThumbnailImage(image));
         image.ResizeImageToMaxDimension(size);
 
         if(portraitCropResult != null) {
