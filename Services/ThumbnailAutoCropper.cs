@@ -40,9 +40,24 @@ public class ThumbnailAutoCropper {
                 .Where(f => _getArea(f) >= faceAreaThreshold)
                 .Where(f => people.Any(p => _areOverlapping(f, p)));
 
+            var peopleByFaces = faces
+                .Where(f => _getArea(f) >= faceAreaThreshold)
+                .ToDictionary(f => f, f => people.Where(p => _areOverlapping(f, p)));
+
             if(facesInPeopleBoundaries.Any()) {
-                return facesInPeopleBoundaries
-                    .Select(f => f.Box)
+                return peopleByFaces
+                    .Select(pair => {
+                        var f = pair.Key;
+                        var people = pair.Value;
+                        var personTopBoundary = people.Select(p => p.Box.Top)
+                            .Order()
+                            .First();
+
+                        var horizontalPadding = f.Box.Width * 0.2;
+                        var verticalPadding = f.Box.Height * 0.2;
+                        float padding = 0; //(float)Math.Max(horizontalPadding, verticalPadding);
+                        return new Box(f.Box.Left - padding, personTopBoundary, f.Box.Right + padding, f.Box.Bottom + padding);
+                    })
                     .AsEnumerable();
             }
 
