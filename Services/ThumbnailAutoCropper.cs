@@ -322,7 +322,8 @@ public class ThumbnailAutoCropper {
         return new PortraitCropResult(box, finalScore);
     }
 
-    public PortraitCropResult? CropImageToPortrait(Image<Rgb24> image) {
+    public PortraitCropResult? CropImageToPortrait(ThumbnailImage thumbnailImage) {
+        Image<Rgb24> image = thumbnailImage.Image;
         List<Prediction> predictions = new();
         foreach(var detector in _objectDetectors) {
             predictions.AddRange(detector.FindObjects(image));
