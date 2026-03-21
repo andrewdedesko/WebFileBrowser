@@ -1,0 +1,20 @@
+@model WebFileBrowser.Models.ShareBreadcrumbNavigationModel
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Browse" asp-route-share="@Model.Share"
+                                           asp-route-path="">@Model.Share</a></li>
+        
+        @foreach (var c in Model.PathComponents)
+        {
+            @if (Model.CurrentPath != c.Path)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Browse" asp-route-share="@Model.Share"
+                                                   asp-route-path="@c.Path">@c.Name</a></li>
+                }else
+                {
+                    <li class="breadcrumb-item active">@c.Name</li>
+                }
+            }
+        </ol>
+    </nav>
