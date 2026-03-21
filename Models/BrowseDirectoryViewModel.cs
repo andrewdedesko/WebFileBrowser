@@ -23,6 +23,12 @@ class PathViewModel
     public string Path {get; set;}
 }
 
+record ShareBreadcrumbNavigationModel {
+    public required string Share {get; init;}
+    public required string CurrentPath {get; init;}
+    public required IEnumerable<PathViewModel> PathComponents {get; init;}
+}
+
 class BrowseDirectoryViewModel
 {
     public string Name {get; set;}
