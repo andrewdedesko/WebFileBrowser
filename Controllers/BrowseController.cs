@@ -113,7 +113,7 @@ public class BrowseController : Controller
         var viewName = "Index";
         if (string.IsNullOrEmpty(view)) {
             if(!string.IsNullOrEmpty(path) && directories.Any()){
-                if (PathMatchesThumbnailViewPatterns(path)){
+                if (PathMatchesThumbnailViewPatterns(share, path)){
                     viewName = "PreviewIndex";
                 }
             }
@@ -274,11 +274,15 @@ public class BrowseController : Controller
         throw new Exception("Unsupported video extension");
     }
 
-    private bool PathMatchesThumbnailViewPatterns(string path)
+    private bool PathMatchesThumbnailViewPatterns(string share, string path)
     {
         if (string.IsNullOrEmpty(path))
         {
             return false;
+        }
+
+        if(_browseService.IsDirectory(share, path) && !path.EndsWith("/")) {
+            path += "/";
         }
 
         foreach(var p in _defaultViews.ThumbnailViewPathPatterns)
