@@ -44,7 +44,7 @@ public class ObjectDetectionController : Controller {
             Dictionary<DetectedObjectClass, Color> classColors = new();
             classColors.Add(DetectedObjectClass.Face, Color.SeaGreen);
             classColors.Add(DetectedObjectClass.Person, Color.SeaGreen);
-            classColors.Add(DetectedObjectClass.Animal, Color.AliceBlue);
+            classColors.Add(DetectedObjectClass.Animal, Color.ForestGreen);
             classColors.Add(DetectedObjectClass.Furniture, Color.Orange);
 
             // var foundObjects = predictions.Select(p => $"{p.Label}: {p.Confidence}").ToArray();
@@ -54,11 +54,11 @@ public class ObjectDetectionController : Controller {
                 if(classColors.ContainsKey(p.ObjectClass)) {
                     color = classColors[p.ObjectClass];
                 } else {
-                    color = Color.Green;
+                    color = Color.DarkSlateBlue;
                 }
                 var pen = Pens.Solid(color, 4);
 
-                var label = $"{labelClass}";
+                var label = $"{labelClass} ({p.Confidence:0.000})";
 
                 FontRectangle size = TextMeasurer.MeasureBounds(label, new TextOptions(font));
                 var textLocation = new PointF(p.Box.Left, p.Box.Top);
