@@ -78,7 +78,14 @@ public class BrowseController : Controller
                 IsImage = _fileTypeService.IsImage(Path.GetFileName(f)),
                 IsVideo = _fileTypeService.IsVideo(Path.GetExtension(f).ToLower())
             })
-            .OrderBy(f => f.Name)
+            .OrderBy(f => {
+                var nameWithoutExtension = Path.GetFileNameWithoutExtension(f.Name);
+                if(int.TryParse(nameWithoutExtension, out int nameInt)) {
+                    return $"{nameInt:000000}";
+                } else {
+                    return nameWithoutExtension;
+                }
+            })
             .AsEnumerable();
 
         var directoryContainsImages = files.Any(f => _fileTypeService.IsImage(f));
@@ -146,7 +153,14 @@ public class BrowseController : Controller
                 Share = share,
                 Path = f
             })
-            .OrderBy(f => f.Name)
+            .OrderBy(f => {
+                var nameWithoutExtension = Path.GetFileNameWithoutExtension(f.Name);
+                if(int.TryParse(nameWithoutExtension, out int nameInt)) {
+                    return $"{nameInt:000000}";
+                } else {
+                    return nameWithoutExtension;
+                }
+            })
             .AsEnumerable();
 
         string? startingImageName = null;
