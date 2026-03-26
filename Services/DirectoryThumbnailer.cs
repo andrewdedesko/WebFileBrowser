@@ -32,20 +32,26 @@ public class DirectoryThumbnailer {
     }
 
     private Image<Rgb24>? _findThumbnail(string share, string path) {
+        foreach(var imagePath in FindThumbnailImages(share, path)) {
+            try {
+                var thumbnail = _loadThumbnailImageForFile(share, imagePath);
+                if(thumbnail != null) {
+                    return thumbnail;
+                }
+            } catch(Exception) {}
+        }
+
+        return null;
+    }
+
+    public IEnumerable<string> FindThumbnailImages(string share, string path) {
         Queue<string> pathQueue = new();
         pathQueue.Enqueue(path);
 
         while(pathQueue.Any()) {
             var currPath = pathQueue.Dequeue();
             if(_browseService.IsFile(share, currPath)) {
-                try {
-                    var thumbnail = _loadThumbnailImageForFile(share, currPath);
-                    if(thumbnail != null) {
-                        return thumbnail;
-                    }
-                }catch(Exception ex) {
-                    _logger.LogWarning(ex, "Unable to get a thumbnail image for {share}:{path}", share, currPath);
-                }
+                yield return currPath;
 
             } else if(_browseService.IsDirectory(share, currPath)) {
                 var customThumbnailPath = _findCustomThumbnailFile(share, currPath);
@@ -68,8 +74,6 @@ public class DirectoryThumbnailer {
                 }
             }
         }
-
-        return null;
     }
 
     private string? _findCustomThumbnailFile(string share, string path) {
