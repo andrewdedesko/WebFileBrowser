@@ -134,12 +134,18 @@ public class ImageThumbnailService : IImageThumbnailService {
     public string GetThumbnailImageMimeType() =>
         _thumbnailImageMimeType;
 
-    public Task SetThumbnailCacheAsync(string share, string path, int size, byte[] thumbnailData) =>
-        SetThumbnailCacheAsync(_shareService.GetPath(share, path), size, thumbnailData);
+    public async Task SetThumbnailCacheAsync(string share, string path, int size, byte[] thumbnailData){
+        TimeSpan absoluteExpiry;
+        if(_browseService.IsDirectory(share, path)) {
+            absoluteExpiry = TimeSpan.FromDays(Random.Shared.Next(4, 21));
+        } else {
+            absoluteExpiry = TimeSpan.FromDays(1);
+        }
 
-    public async Task SetThumbnailCacheAsync(string filePath, int size, byte[] thumbnailData) {
         if(_allowedThumbnailCacheSizes.Contains(size)) {
-            await _cache.SetAsync(_thumbnailCacheKey(filePath, size), thumbnailData);
+            DistributedCacheEntryOptions cacheEntryOptions = new();
+            cacheEntryOptions.SetAbsoluteExpiration(absoluteExpiry);
+            await _cache.SetAsync(_thumbnailCacheKey(_shareService.GetPath(share, path), size), thumbnailData, cacheEntryOptions);
         }
     }
 
