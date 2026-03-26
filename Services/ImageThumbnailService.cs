@@ -41,8 +41,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         }
 
         DistributedCacheEntryOptions cacheEntryOptions = new();
-        var expiration = TimeSpan.FromDays(7) + TimeSpan.FromDays(Random.Shared.Next(0, 7));
-        cacheEntryOptions.SetAbsoluteExpiration(expiration);
+        var absoluteExpiration = TimeSpan.FromDays(Random.Shared.Next(4, 21));
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
@@ -79,7 +78,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         }
 
         if(useCache || refreshCache) {
-            await SetThumbnailCacheAsync(share, path, size, data);
+            await SetThumbnailCacheAsync(share, path, size, data, absoluteExpiration);
         }
 
         return data;
@@ -134,14 +133,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     public string GetThumbnailImageMimeType() =>
         _thumbnailImageMimeType;
 
-    public async Task SetThumbnailCacheAsync(string share, string path, int size, byte[] thumbnailData){
-        TimeSpan absoluteExpiry;
-        if(_browseService.IsDirectory(share, path)) {
-            absoluteExpiry = TimeSpan.FromDays(Random.Shared.Next(4, 21));
-        } else {
-            absoluteExpiry = TimeSpan.FromDays(1);
-        }
-
+    private async Task SetThumbnailCacheAsync(string share, string path, int size, byte[] thumbnailData, TimeSpan absoluteExpiry){
         if(_allowedThumbnailCacheSizes.Contains(size)) {
             DistributedCacheEntryOptions cacheEntryOptions = new();
             cacheEntryOptions.SetAbsoluteExpiration(absoluteExpiry);
