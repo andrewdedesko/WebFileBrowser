@@ -49,16 +49,18 @@
         }
 
         <div class="btn-group float-end">
-                <a href="#" onclick="return false;" class="btn btn-sm btn-secondary">...</a>
+                <a href="#" onclick="return false;" class="btn btn-sm btn-outline-secondary more-actions-toggle">...</a>
         </div>
         
-        <div class="btn-group float-end" role="group">
-            <a href="@Url.Action("RefreshThumbnail", "Browse", new { share = Model.Share, path = Model.Path })"
-                class="btn btn-sm btn-secondary" role="button">Refresh Thumbnail</a>
+        <section class="more-actions more-actions-hidden">
+            <div class="btn-group float-end" role="group">
+                <a href="@Url.Action("RefreshThumbnail", "Browse", new { share = Model.Share, path = Model.Path })"
+                    class="btn btn-sm btn-secondary" role="button">Refresh Thumbnail</a>
 
-            <a href="@Url.Action("RefreshThumbnails", "Browse", new { share = Model.Share, path = Model.Path })"
-                class="btn btn-sm btn-secondary" role="button">Refresh Thumbnails</a>
-        </div>
+                <a href="@Url.Action("RefreshThumbnails", "Browse", new { share = Model.Share, path = Model.Path })"
+                    class="btn btn-sm btn-secondary" role="button">Refresh Thumbnails</a>
+            </div>
+        </section>
     </div>
 </div>
 
@@ -73,6 +75,16 @@
 </div>
 
 @section Styles{
+    <style>
+        .more-actions{
+            
+        }
+
+        .more-actions-hidden{
+            display: none;
+        }
+    </style>
+
     <style>
         .file-list {
             list-style: none;
@@ -195,4 +207,23 @@
             }
         } *@
     </style>
+}
+
+@section Scripts{
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleButtons = document.getElementsByClassName("more-actions-toggle");
+            for(const button of toggleButtons){
+                    button.addEventListener("click", toggleMoreActionsMenu);
+            }
+        });
+
+        function toggleMoreActionsMenu(ev){
+            ev.preventDefault();
+            const moreActionsMenus = document.getElementsByClassName("more-actions");
+            for(const menu of moreActionsMenus){
+                menu.classList.remove("more-actions-hidden");
+            }
+        }
+    </script>
 }
