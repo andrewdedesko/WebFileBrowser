@@ -91,17 +91,6 @@ public class ImageThumbnailService : IImageThumbnailService {
             return cachedThumbnail;
         }
 
-        // Migrate old thumbnail cache to new cache with sizes
-        if(size == 240) {
-            var old240PxCacheKey = _oldThumbnail240PxCacheKey(share, path);
-            var oldCached240PxThumbnail = _cache.Get(old240PxCacheKey);
-            if(oldCached240PxThumbnail != null) {
-                await _cache.RemoveAsync(old240PxCacheKey);
-                await SetThumbnailCacheAsync(share, path, size, oldCached240PxThumbnail);
-                return oldCached240PxThumbnail;
-            }
-        }
-
         return null;
     }
 
