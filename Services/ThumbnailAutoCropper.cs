@@ -49,14 +49,29 @@ public class ThumbnailAutoCropper {
                     .Select(pair => {
                         var f = pair.Key;
                         var people = pair.Value;
+
+                        var peopleBoundingBox = _boundingBox(people.Select(p => p.Box));
+
                         var personTopBoundary = people.Select(p => p.Box.Top)
                             .Order()
                             .First();
 
+                        var personBottomBoundary = people.Max(p => p.Box.Bottom);
+
                         var horizontalPadding = f.Box.Width * 0.2;
                         var verticalPadding = f.Box.Height * 0.2;
                         float padding = 0; //(float)Math.Max(horizontalPadding, verticalPadding);
-                        return new Box(f.Box.Left - padding, personTopBoundary, f.Box.Right + padding, f.Box.Bottom + padding);
+
+                        var cropTargetTop = f.Box.Top;
+                        if(cropTargetTop > personTopBoundary && cropTargetTop - personTopBoundary <= peopleBoundingBox.Height * 0.2) {
+                            cropTargetTop = personTopBoundary;
+                        }
+
+                        var cropTargetBottom = f.Box.Bottom;
+                        if(f.Box.Bottom < peopleBoundingBox.Bottom && peopleBoundingBox.Bottom - f.Box.Bottom <= peopleBoundingBox.Height * 0.2) {
+                            cropTargetBottom = peopleBoundingBox.Bottom;
+                        }
+                        return new Box(f.Box.Left - padding, cropTargetTop, f.Box.Right + padding, cropTargetBottom);
                     })
                     .AsEnumerable();
             }
@@ -72,6 +87,15 @@ public class ThumbnailAutoCropper {
         }
 
         return Enumerable.Empty<Box>();
+    }
+
+    private Box _boundingBox(IEnumerable<Box> boxes) {
+        var left = boxes.Min(b => b.Left);
+        var right = boxes.Max(b => b.Right);
+        var top = boxes.Min(b => b.Top);
+        var bottom = boxes.Max(b => b.Bottom);
+
+        return new Box(left, top, right, bottom);
     }
 
     private Box? _findPortraitCropV1(IEnumerable<Prediction> predictions, int imageWidth, int imageHeight) {
