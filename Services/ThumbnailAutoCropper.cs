@@ -89,6 +89,109 @@ public class ThumbnailAutoCropper {
         return Enumerable.Empty<Box>();
     }
 
+    // private Box? _getPeopleCropTarget(IEnumerable<Prediction> predictions, int imageWidth, int imageHeight) {
+    //     var smallestImageDimension = Math.Min(imageWidth, imageHeight);
+
+    //     var faces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);
+    //     var people = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Person);
+
+    //     if(predictions.Any(p => p.ObjectClass == DetectedObjectClass.Face)) {
+    //         List<List<Box>> faceTargets = new();
+
+    //         var facesByArea = faces
+    //                 .OrderByDescending(f => _getArea(f));
+
+    //         int faceAreaThreshold = 0;
+    //         if(faces.Count() > 1) {
+    //             var largestFaceArea = _getArea(facesByArea.First());
+    //             var smallestFaceArea = _getArea(facesByArea.Last());
+
+    //             faceAreaThreshold = (int)Math.Floor(smallestFaceArea + (largestFaceArea - smallestFaceArea) / 2);
+    //             faceAreaThreshold = (int)Math.Floor(faceAreaThreshold * 0.75);
+    //         }
+
+    //         var facesInPeopleBoundaries = faces
+    //             .Where(f => _getArea(f) >= faceAreaThreshold)
+    //             .Where(f => people.Any(p => _areOverlapping(f, p)));
+
+    //         var peopleByFaces = faces
+    //             .Where(f => _getArea(f) >= faceAreaThreshold)
+    //             .ToDictionary(f => f, f => people.Where(p => _areOverlapping(f, p)));
+
+    //         if(facesInPeopleBoundaries.Any()) {
+    //             var adjustedFaceBoxes = peopleByFaces
+    //                 .Select(pair => {
+    //                     var f = pair.Key;
+    //                     var people = pair.Value;
+    //                     var personTopBoundary = people.Select(p => p.Box.Top)
+    //                         .Order()
+    //                         .First();
+
+    //                     var horizontalPadding = f.Box.Width * 0.2;
+    //                     var verticalPadding = f.Box.Height * 0.2;
+    //                     float padding = 0; //(float)Math.Max(horizontalPadding, verticalPadding);
+    //                     return new Box(f.Box.Left - padding, (int)Math.Floor(f.Box.Top - f.Box.Height * 0.3), f.Box.Right + padding, f.Box.Bottom + padding);
+    //                 })
+    //                 .AsEnumerable();
+
+    //             var facesBoundingBox = _boundingBox(peopleByFaces.Keys.Select(p => p.Box));
+    //             var peopleBoundingBox = _boundingBox(people.Select(p => p.Box));
+
+    //             int cropLeft = 0;
+    //             int cropRight = imageWidth;
+    //             int cropTop = 0;
+    //             int cropBottom = imageHeight;
+
+    //             // Portrait
+    //             if(imageWidth <= imageHeight) {
+    //                 float srcFaceCentre = facesBoundingBox.Top + facesBoundingBox.Height / 2;
+    //                 double srcFaceCentrePercentage = (double)srcFaceCentre / imageHeight;
+
+    //                 srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, imageMarginLower, imageMarginUpper);
+
+    //                 float cropFaceCentre = (float)Math.Floor(smallestDimension * srcFaceCentrePercentage);
+    //                 cropTop = srcFaceCentre - cropFaceCentre;
+    //                 if(cropTop < 0) {
+    //                     cropTop = 0;
+    //                 }
+
+    //                 if(cropTop + smallestDimension > srcHeight) {
+    //                     cropTop = srcHeight - smallestDimension;
+    //                 }
+
+    //                 cropBottom = cropTop + cropDimension;
+
+    //                 // float cropTargetHorizontalCentre = peopleBoundingBox.Left + (float)Math.Floor(peopleBoundingBox.Width / 2);
+    //                 // cropLeft = (int)Math.Floor(cropTargetHorizontalCentre - Math.Ceiling(smallestImageDimension / 2f));
+    //                 // cropRight = cropLeft + cropDimension;
+
+    //             // Landscape
+    //             } else {
+    //                 var cropTargetCentre = facesBoundingBox.Left + Math.Floor(facesBoundingBox.Width / 2);
+    //                 cropLeft = (int)Math.Max(0, cropTargetCentre - (smallestImageDimension / 2));
+    //                 cropRight = cropLeft + smallestImageDimension;
+    //             }
+
+    //             return new Box(
+    //                 Math.Max(0, cropLeft),
+    //                 Math.Max(0, cropTop),
+    //                 Math.Min(imageWidth, cropRight),
+    //                 Math.Min(imageHeight, cropBottom)
+    //             );
+    //         }
+
+    //         return _boundingBox(faces
+    //             .Where(f => _getArea(f) >= faceAreaThreshold)
+    //             .Select(f => f.Box));
+    //     }
+
+    //     if(people.Any()) {
+    //         return _boundingBox(people.Select(p => p.Box));
+    //     }
+
+    //     return null;
+    // }
+
     private Box _boundingBox(IEnumerable<Box> boxes) {
         var left = boxes.Min(b => b.Left);
         var right = boxes.Max(b => b.Right);
@@ -208,7 +311,7 @@ public class ThumbnailAutoCropper {
         return squareCrop;
     }
 
-    private PortraitCropResult? _findPortraitCropV2(IEnumerable<Prediction> predictions, int imageWidth, int imageHeight) {
+    private CropResult? _findPortraitCropV2(IEnumerable<Prediction> predictions, int imageWidth, int imageHeight) {
         var predList = predictions.ToList();
 
         var faces = predList
@@ -321,13 +424,13 @@ public class ThumbnailAutoCropper {
             float faceUnionSize = Math.Max(faceUnionWidth, faceUnionHeight);
 
             // How large should the square be so the face union is 45% of it?
-            const float targetFaceFraction = 0.45f;
+            const float targetFaceFraction = 0.25f;
             float zoomedSide = faceUnionSize / targetFaceFraction;
 
             // Only zoom in (shrink the crop), never zoom out beyond the padded ROI
             // Also never go smaller than the face union + 20% safety margin
             float minSide = faceUnionSize * 1.2f;
-            side = Math.Clamp(zoomedSide, minSide, side);
+            side = Math.Clamp(zoomedSide, Math.Min(minSide, side), Math.Max(minSide, side));
 
             side = Math.Min(side, Math.Min(imageWidth, imageHeight));
         }
@@ -358,10 +461,10 @@ public class ThumbnailAutoCropper {
         finalScore = Math.Clamp(finalScore, 0f, 1f);
 
         var box = new Box(xmin: x1, ymin: y1, xmax: x2, ymax: y2);
-        return new PortraitCropResult(box, finalScore);
+        return new CropResult(box.AsRectangle(), finalScore);
     }
 
-    public PortraitCropResult? CropImageToPortrait(ThumbnailImage thumbnailImage) {
+    public CropResult? CropImageToPortrait(ThumbnailImage thumbnailImage) {
         Image<Rgb24> image = thumbnailImage.Image;
         List<Prediction> predictions = new();
         foreach(var detector in _objectDetectors) {
@@ -370,7 +473,7 @@ public class ThumbnailAutoCropper {
 
         var cropResult = _findPortraitCropV2(predictions, image.Width, image.Height);
         if(cropResult?.Box != null) {
-            image.Mutate(i => i.Crop(cropResult.Box.AsRectangle()));
+            image.Mutate(i => i.Crop(cropResult.Box));
         }
 
         return cropResult;
@@ -378,6 +481,15 @@ public class ThumbnailAutoCropper {
 
     public void CropImageToSquareAroundFace(ThumbnailImage thumbnailImage, bool annotateImage = false) {
         CropImageToSquareAroundFace(thumbnailImage.Image, annotateImage: annotateImage);
+    }
+
+    private IEnumerable<Prediction> _getPredictions(Image<Rgb24> image) {
+        List<Prediction> predictions = new();
+        foreach(var detector in _objectDetectors) {
+            predictions.AddRange(detector.FindObjects(image));
+        }
+
+        return predictions;
     }
 
     public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
@@ -406,6 +518,8 @@ public class ThumbnailAutoCropper {
                 srcImage.Mutate(i => i.Draw(pen, _rectangle(box)));
             }
         }
+
+        // var cropBox = _getPeopleCropTarget(predictions, srcWidth, srcHeight);
 
         // Crop to square around face
         if(cropTargets.Any()) {
@@ -437,12 +551,12 @@ public class ThumbnailAutoCropper {
                 srcImage.Mutate(i => i.Draw(pen, new Rectangle(srcFaceLeft, srcFaceTop, srcFaceWidth, srcFaceHeight)));
             }
 
-            var smallestDimension = Math.Min(srcWidth, srcHeight);
+            int smallestDimension = Math.Min(srcWidth, srcHeight);
             if(smallestDimension < boundingBoxWidth || smallestDimension < boundingBoxHeight) {
                 return;
             }
 
-            var cropLeft = 0;
+            int cropLeft = 0;
             if(srcWidth > smallestDimension) {
                 int srcFaceCentre = srcFaceLeft + srcFaceWidth / 2;
                 double srcFaceCentrePercentage = (double)srcFaceCentre / srcWidth;
@@ -461,7 +575,7 @@ public class ThumbnailAutoCropper {
                 }
             }
 
-            var cropTop = 0;
+            int cropTop = 0;
             if(srcHeight > smallestDimension) {
                 int srcFaceCentre = srcFaceTop + srcFaceHeight / 2;
                 double srcFaceCentrePercentage = (double)srcFaceCentre / srcHeight;
@@ -488,6 +602,117 @@ public class ThumbnailAutoCropper {
                 srcImage.Mutate(i => i.Crop(cropRectangle));
             }
         }
+    }
+
+    public CropResult? FindSquareCropAroundFaces(IEnumerable<Prediction> predictions, Image<Rgb24> srcImage, bool annotateImage = false) {
+        float cropScore = 1;
+
+        IEnumerable<Box> cropTargets = _getHumanCropTargets(predictions);
+
+        var srcWidth = srcImage.Bounds.Width;
+        var srcHeight = srcImage.Bounds.Height;
+
+        // Annotate faces
+        if(annotateImage) {
+            var pen = Pens.Solid(Color.SeaGreen, 2);
+            var predictionPen = Pens.Dot(Color.Yellow, 2);
+
+            foreach(var prediction in predictions) {
+                if(!cropTargets.Any(t => t == prediction.Box)) {
+                    srcImage.Mutate(i => i.Draw(predictionPen, _rectangle(prediction.Box)));
+                }
+            }
+
+            foreach(var box in cropTargets) {
+                srcImage.Mutate(i => i.Draw(pen, _rectangle(box)));
+            }
+        }
+
+        // var cropBox = _getPeopleCropTarget(predictions, srcWidth, srcHeight);
+
+        // Crop to square around face
+        if(cropTargets.Any()) {
+            int _mostLeftFace = (int)Math.Floor(cropTargets.Select(f => f.Left).Order().First());
+            int _mostRightFace = (int)Math.Floor(cropTargets.Select(f => f.Right).OrderDescending().First());
+            int _mostTopFace = (int)Math.Floor(cropTargets.Select(f => f.Top).Order().First());
+            int _mostBottomFace = (int)Math.Floor(cropTargets.Select(f => f.Bottom).OrderDescending().First());
+            int boundingBoxWidth = _mostRightFace - _mostLeftFace;
+            int boundingBoxHeight = _mostBottomFace - _mostTopFace;
+
+            double imageMarginLower = 0.33;
+            double imageMarginUpper = 0.66;
+            if(cropTargets.Count() > 1) {
+                imageMarginLower = 0.2;
+                imageMarginUpper = 0.8;
+            }
+
+            int faceMargin = 0;
+
+            int srcFaceLeft = _mostLeftFace - faceMargin;
+            int srcFaceRight = _mostRightFace + faceMargin;
+            int srcFaceTop = _mostTopFace - faceMargin;
+            int srcFaceBottom = _mostBottomFace + faceMargin;
+            var srcFaceWidth = srcFaceRight - srcFaceLeft;
+            var srcFaceHeight = srcFaceBottom - srcFaceTop;
+
+            if(annotateImage) {
+                var pen = Pens.Dash(Color.HotPink, 2);
+                srcImage.Mutate(i => i.Draw(pen, new Rectangle(srcFaceLeft, srcFaceTop, srcFaceWidth, srcFaceHeight)));
+            }
+
+            int smallestDimension = Math.Min(srcWidth, srcHeight);
+            if(smallestDimension < boundingBoxWidth || smallestDimension < boundingBoxHeight) {
+                return null;
+            }
+
+            int cropLeft = 0;
+            if(srcWidth > smallestDimension) {
+                int srcFaceCentre = srcFaceLeft + srcFaceWidth / 2;
+                double srcFaceCentrePercentage = (double)srcFaceCentre / srcWidth;
+
+                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, imageMarginLower, imageMarginUpper);
+
+                int cropFaceCentre = (int)Math.Floor(smallestDimension * srcFaceCentrePercentage);
+                cropLeft = srcFaceCentre - cropFaceCentre;
+
+                if(cropLeft < 0) {
+                    cropLeft = 0;
+                }
+
+                if(cropLeft + smallestDimension > srcWidth) {
+                    cropLeft = srcWidth - smallestDimension;
+                }
+            }
+
+            int cropTop = 0;
+            if(srcHeight > smallestDimension) {
+                int srcFaceCentre = srcFaceTop + srcFaceHeight / 2;
+                double srcFaceCentrePercentage = (double)srcFaceCentre / srcHeight;
+
+                srcFaceCentrePercentage = Math.Clamp(srcFaceCentrePercentage, imageMarginLower, imageMarginUpper);
+
+                int cropFaceCentre = (int)Math.Floor(smallestDimension * srcFaceCentrePercentage);
+                cropTop = srcFaceCentre - cropFaceCentre;
+                if(cropTop < 0) {
+                    cropTop = 0;
+                }
+
+                if(cropTop + smallestDimension > srcHeight) {
+                    cropTop = srcHeight - smallestDimension;
+                }
+            }
+
+            var cropRectangle = new Rectangle(cropLeft, cropTop, smallestDimension, smallestDimension);
+
+            if(annotateImage) {
+                var cropPen = Pens.Dash(Color.MediumVioletRed, 2);
+                srcImage.Mutate(i => i.Draw(cropPen, cropRectangle));
+            }
+
+            return new CropResult(cropRectangle, cropScore);
+        }
+
+        return null;
     }
 
     private static float _getArea(Box box) =>
@@ -520,4 +745,4 @@ public class ThumbnailAutoCropper {
     }
 }
 
-public record PortraitCropResult(Box Box, float Score);
+public record CropResult(Rectangle Box, float Score);
