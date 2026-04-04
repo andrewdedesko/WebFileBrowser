@@ -58,6 +58,20 @@ public class ObjectDetectionController : Controller {
                 }
                 var pen = Pens.Solid(color, 4);
 
+                // sourceImage.Mutate(i => i.DrawText(label, font, color, new PointF(p.Box.Xmin, p.Box.Ymin)));
+                sourceImage.Mutate(i => i.Draw(pen, new RectangleF(p.Box.Left, p.Box.Top, p.Box.Width, p.Box.Height)));
+            }
+
+            foreach(var p in predictions) {
+                var labelClass = p.Label;
+                Color color;
+                if(classColors.ContainsKey(p.ObjectClass)) {
+                    color = classColors[p.ObjectClass];
+                } else {
+                    color = Color.DarkSlateBlue;
+                }
+                var pen = Pens.Solid(color, 4);
+                
                 var label = $"{labelClass} ({p.Confidence:0.000})";
 
                 FontRectangle size = TextMeasurer.MeasureBounds(label, new TextOptions(font));
@@ -70,14 +84,11 @@ public class ObjectDetectionController : Controller {
                     size.Width + (padding * 2),
                     size.Height + (padding * 2));
 
-
-                // sourceImage.Mutate(i => i.DrawText(label, font, color, new PointF(p.Box.Xmin, p.Box.Ymin)));
-                sourceImage.Mutate(i => i.Draw(pen, new RectangleF(p.Box.Left, p.Box.Top, p.Box.Width, p.Box.Height)));
                 sourceImage.Mutate(x => x
-        .BackgroundColor(color)
-        .Fill(color, rect) // Draw blue background
-        .DrawText(label, font, Color.White, textLocation) // Draw white text
-        );
+                    .BackgroundColor(color)
+                    .Fill(color, rect) // Draw blue background
+                    .DrawText(label, font, Color.White, textLocation) // Draw white text
+                );
             }
 
             // return Ok(string.Join(", ", foundObjects));
