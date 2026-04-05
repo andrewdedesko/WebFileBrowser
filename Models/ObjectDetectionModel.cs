@@ -36,6 +36,8 @@ public record Box {
 
     public float Width => Xmax - Xmin;
     public float Height => Ymax - Ymin;
+
+    public float Area => Width * Height;
 }
 
 public record LabelClass(string Name, DetectedObjectClass DetectedObjectClass) {

@@ -11,15 +11,19 @@ public class DirectoryThumbnailer {
     private readonly IShareService _shareService;
     private readonly IBrowseService _browseService;
     private readonly IFileTypeService _fileTypeService;
+    private readonly IAutoCropper _autoCropper;
+    private readonly ThumbnailAutoCropper _thumbnailAutoCropper;
     private readonly ILogger<DirectoryThumbnailer> _logger;
 
-    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ILogger<DirectoryThumbnailer> logger) {
+    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ILogger<DirectoryThumbnailer> logger, ThumbnailAutoCropper thumbnailAutoCropper, IAutoCropper autoCropper) {
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
         _browseService = browseService;
         _fileTypeService = fileTypeService;
         _shareService = shareService;
         _logger = logger;
+        _thumbnailAutoCropper = thumbnailAutoCropper;
+        _autoCropper = autoCropper;
     }
 
     public ThumbnailImage? FindThumbnail(string share, string path) {
@@ -42,6 +46,29 @@ public class DirectoryThumbnailer {
         }
 
         return null;
+    }
+
+    public IEnumerable<Tuple<string, CropResult>> FindBestThumbnailImage(string share, string path) {
+        List<Tuple<string, CropResult>> thumbnailOptions = new();
+        foreach(var currentPath in FindThumbnailImages(share, path)) {
+            if(!_fileTypeService.IsImage(share, currentPath)) {
+                continue;
+            }
+
+            using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
+                var predictions = _thumbnailAutoCropper.FindPredictions(image);
+                CropResult? cropResult = _autoCropper.FindCrop(image.Width, image.Height, predictions);
+                if(cropResult != null) {
+                    thumbnailOptions.Add(new Tuple<string, CropResult>(currentPath, cropResult));
+
+                    if(thumbnailOptions.Count() >= 6) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return thumbnailOptions;
     }
 
     public IEnumerable<string> FindThumbnailImages(string share, string path) {

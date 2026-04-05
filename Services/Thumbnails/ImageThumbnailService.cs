@@ -1,4 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using WebFileBrowser.Models;
 
 namespace WebFileBrowser.Services;
@@ -45,21 +48,48 @@ public class ImageThumbnailService : IImageThumbnailService {
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
         if(Directory.Exists(filePath)) {
-            var thumbnailImage = _directoryThumbnailer.FindThumbnail(share, path);
-
-            if(thumbnailImage != null) {
-                if(!fast) {
-                    _thumbnailAutoCropper.CropImageToSquareAroundFace(thumbnailImage);
-                } else {
+            if(fast) {
+                var thumbnailImage = _directoryThumbnailer.FindThumbnail(share, path);
+                if(thumbnailImage != null) {
                     cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromHours(1));
                     await _backgroundThumbnailQueue.EnqueueAsync(new ThumbnailTask() {
                         Share = share,
                         Path = path
                     });
+
+                    _imageThumbnailer.ScaleImageToThumbnail(thumbnailImage, size);
+                    data = _imageThumbnailer.GetImageAsBytes(thumbnailImage);
                 }
 
-                _imageThumbnailer.ScaleImageToThumbnail(thumbnailImage, size);
-                data = _imageThumbnailer.GetImageAsBytes(thumbnailImage);
+            } else {
+                List<Tuple<string, CropResult>> thumbnailOptions = new();
+                foreach(var currentPath in _directoryThumbnailer.FindThumbnailImages(share, path)) {
+                    if(!_fileTypeService.IsImage(share, currentPath)) {
+                        continue;
+                    }
+
+                    using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
+                        var predictions = _thumbnailAutoCropper.FindPredictions(image);
+                        CropResult? cropResult = _thumbnailAutoCropper.FindFaceSquareCrop(image.Width, image.Height, predictions, image);
+                        if(cropResult != null) {
+                            thumbnailOptions.Add(new Tuple<string, CropResult>(currentPath, cropResult));
+
+                            if(thumbnailOptions.Count() >= 6) {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if(thumbnailOptions.Any()) {
+                    var bestThumbnailOption = thumbnailOptions.OrderByDescending(o => o.Item2.Score).First();
+                    var bestThumbnailPath = bestThumbnailOption.Item1;
+                    using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, bestThumbnailPath))) {
+                        image.Mutate(i => i.Crop(bestThumbnailOption.Item2.Box));
+                        _imageThumbnailer.ScaleImageToThumbnail(image, size);
+                        data = _imageThumbnailer.GetImageAsBytes(image);
+                    }
+                }
             }
 
         } else if(!File.Exists(filePath)) {
@@ -122,7 +152,7 @@ public class ImageThumbnailService : IImageThumbnailService {
     public string GetThumbnailImageMimeType() =>
         _thumbnailImageMimeType;
 
-    private async Task SetThumbnailCacheAsync(string share, string path, int size, byte[] thumbnailData, TimeSpan absoluteExpiry){
+    private async Task SetThumbnailCacheAsync(string share, string path, int size, byte[] thumbnailData, TimeSpan absoluteExpiry) {
         if(_allowedThumbnailCacheSizes.Contains(size)) {
             DistributedCacheEntryOptions cacheEntryOptions = new();
             cacheEntryOptions.SetAbsoluteExpiration(absoluteExpiry);
