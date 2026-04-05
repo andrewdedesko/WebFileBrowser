@@ -50,11 +50,13 @@ public class DirectoryThumbnailer {
 
     public IEnumerable<Tuple<string, CropResult>> FindBestThumbnailImage(string share, string path) {
         List<Tuple<string, CropResult>> thumbnailOptions = new();
+        int attempts = 0;
         foreach(var currentPath in FindThumbnailImages(share, path)) {
             if(!_fileTypeService.IsImage(share, currentPath)) {
                 continue;
             }
 
+            try {
             using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
                 var predictions = _thumbnailAutoCropper.FindPredictions(image);
                 CropResult? cropResult = _autoCropper.FindCrop(image.Width, image.Height, predictions);
@@ -65,6 +67,13 @@ public class DirectoryThumbnailer {
                         break;
                     }
                 }
+            }
+            }catch(Exception ex) {
+                _logger.LogError(ex, "Failed to analyse image {share}:{currentPath}", share, currentPath);
+            }
+
+            if(++attempts >= 10) {
+                break;
             }
         }
 

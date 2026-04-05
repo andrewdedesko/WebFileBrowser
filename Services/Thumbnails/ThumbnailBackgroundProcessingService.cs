@@ -20,7 +20,7 @@ public class ThumbnailBackgroundProcessingService : BackgroundService {
             try {
                 await _imageThumbnailService.GetImageThumbnail(t.Share, t.Path, refreshCache: true, fast: false);
             } catch(Exception ex) {
-                _logger.LogError($"Failed to generate thumbnail for {t.Share}:{t.Path}", ex);
+                _logger.LogError(ex, $"Failed to generate thumbnail for {t.Share}:{t.Path}");
                 continue;
             }
         }

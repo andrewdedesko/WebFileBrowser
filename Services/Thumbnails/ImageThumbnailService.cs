@@ -62,24 +62,7 @@ public class ImageThumbnailService : IImageThumbnailService {
                 }
 
             } else {
-                List<Tuple<string, CropResult>> thumbnailOptions = new();
-                foreach(var currentPath in _directoryThumbnailer.FindThumbnailImages(share, path)) {
-                    if(!_fileTypeService.IsImage(share, currentPath)) {
-                        continue;
-                    }
-
-                    using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
-                        var predictions = _thumbnailAutoCropper.FindPredictions(image);
-                        CropResult? cropResult = _thumbnailAutoCropper.FindFaceSquareCrop(image.Width, image.Height, predictions, image);
-                        if(cropResult != null) {
-                            thumbnailOptions.Add(new Tuple<string, CropResult>(currentPath, cropResult));
-
-                            if(thumbnailOptions.Count() >= 6) {
-                                break;
-                            }
-                        }
-                    }
-                }
+                IEnumerable<Tuple<string, CropResult>> thumbnailOptions = _directoryThumbnailer.FindBestThumbnailImage(share, path);
 
                 if(thumbnailOptions.Any()) {
                     var bestThumbnailOption = thumbnailOptions.OrderByDescending(o => o.Item2.Score).First();
