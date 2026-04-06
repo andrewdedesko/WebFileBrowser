@@ -29,8 +29,11 @@ public class ThumbnailPreCacheBackgroundService : BackgroundService {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         var precached = _cache.GetString("ThumbnailPrecaching:Complete");
         if(precached == "true") {
+            _logger.LogInformation("Thumbnail pre-caching already complete");
             return;
         }
+
+        _logger.LogInformation("Starting thumbnail pre-caching");
 
         _performingPreCaching = true;
         try {

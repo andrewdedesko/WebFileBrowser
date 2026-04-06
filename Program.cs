@@ -31,8 +31,12 @@ builder.Services.AddSingleton<IAutoCropper,ThumbnailAutoCropper>();
 builder.Services.AddSingleton<IImageThumbnailService, ImageThumbnailService>();
 builder.Services.AddSingleton<ThumbnailBackgroundProcessingService>();
 builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailBackgroundProcessingService>());
-// builder.Services.AddSingleton<ThumbnailPreCacheBackgroundService>();
-// builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailPreCacheBackgroundService>());
+
+var thumbnailPreCachingEnabled = builder.Configuration.GetSection("Thumbnails")?.GetValue<bool>("PreCache") ?? false;
+if(thumbnailPreCachingEnabled){
+    builder.Services.AddSingleton<ThumbnailPreCacheBackgroundService>();
+    builder.Services.AddHostedService(ctx => ctx.GetRequiredService<ThumbnailPreCacheBackgroundService>());
+}
 
 builder.Services.AddSingleton<IObjectDetector, SharpAiFaceDetector>();
 builder.Services.AddSingleton<IObjectDetector, YoloCocoObjectDetector>();
