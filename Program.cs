@@ -18,6 +18,8 @@ builder.Services.AddSingleton<FileSystemBrowseService>();
 builder.Services.AddSingleton<IBrowseService>(ctx => ctx.GetRequiredService<FileSystemBrowseService>());
 builder.Services.AddSingleton<IFileTypeService, FileTypeService>();
 
+builder.Services.AddSingleton<ImageLoader>();
+builder.Services.AddSingleton<IObjectDetectionService, ObjectDetectionService>();
 builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
     return new BackgroundThumbnailQueue(1000);
 });

@@ -4,7 +4,6 @@ using WebFileBrowser.Models;
 
 namespace WebFileBrowser.Services.ObjectDetection;
 
-public interface IObjectDetector {
-    public IEnumerable<Prediction> FindObjects(Image<Rgb24> sourceImage);
-    string GetModelIdentifier();
+public interface IObjectDetectionService {
+    IEnumerable<Prediction> GetPredictions(ImageWrapper image);
 }

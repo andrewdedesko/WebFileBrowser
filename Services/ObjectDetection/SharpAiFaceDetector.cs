@@ -18,4 +18,6 @@ public class SharpAiFaceDetector : IObjectDetector {
             Box = new Box(f.Box.Left, f.Box.Top, f.Box.Right, f.Box.Bottom)
         });
     }
+
+    public string GetModelIdentifier() => "SharpAiFaceDetector";
 }

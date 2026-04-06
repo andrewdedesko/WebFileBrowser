@@ -2,6 +2,7 @@ using System.Text.Json;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using WebFileBrowser.Models;
+using WebFileBrowser.Services.ObjectDetection;
 
 namespace WebFileBrowser.Services;
 
@@ -13,9 +14,11 @@ public class DirectoryThumbnailer {
     private readonly IFileTypeService _fileTypeService;
     private readonly IAutoCropper _autoCropper;
     private readonly ThumbnailAutoCropper _thumbnailAutoCropper;
+    private readonly IObjectDetectionService _objectDetectionService;
+    private readonly ImageLoader _imageLoader;
     private readonly ILogger<DirectoryThumbnailer> _logger;
 
-    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ILogger<DirectoryThumbnailer> logger, ThumbnailAutoCropper thumbnailAutoCropper, IAutoCropper autoCropper) {
+    public DirectoryThumbnailer(ImageThumbnailer imageThumbnailer, VideoThumbnailer videoThumbnailer, IBrowseService browseService, IFileTypeService fileTypeService, IShareService shareService, ILogger<DirectoryThumbnailer> logger, ThumbnailAutoCropper thumbnailAutoCropper, IAutoCropper autoCropper, ImageLoader imageLoader, IObjectDetectionService objectDetectionService) {
         _imageThumbnailer = imageThumbnailer;
         _videoThumbnailer = videoThumbnailer;
         _browseService = browseService;
@@ -24,6 +27,8 @@ public class DirectoryThumbnailer {
         _logger = logger;
         _thumbnailAutoCropper = thumbnailAutoCropper;
         _autoCropper = autoCropper;
+        _imageLoader = imageLoader;
+        _objectDetectionService = objectDetectionService;
     }
 
     public ThumbnailImage? FindThumbnail(string share, string path) {
@@ -57,8 +62,11 @@ public class DirectoryThumbnailer {
             }
 
             try {
-            using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
-                var predictions = _thumbnailAutoCropper.FindPredictions(image);
+            // using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
+            using(var imageWrapper = _imageLoader.Load(share, currentPath)){
+                var image = imageWrapper.Image;
+                // var predictions = _thumbnailAutoCropper.FindPredictions(image);
+                var predictions = _objectDetectionService.GetPredictions(imageWrapper);
                 CropResult? cropResult = _autoCropper.FindCrop(image.Width, image.Height, predictions);
                 if(cropResult != null) {
                     thumbnailOptions.Add(new Tuple<string, CropResult>(currentPath, cropResult));
