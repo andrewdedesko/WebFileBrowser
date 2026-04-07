@@ -17,15 +17,6 @@ public class ThumbnailAutoCropper : IAutoCropper {
         _logger = logger;
     }
 
-    public IEnumerable<Prediction> FindPredictions(Image<Rgb24> image) {
-        List<Prediction> predictions = new();
-        foreach(var objectDetector in _objectDetectors) {
-            predictions.AddRange(objectDetector.FindObjects(image));
-        }
-
-        return predictions;
-    }
-
     private IEnumerable<Box> _getHumanCropTargets(IEnumerable<Prediction> predictions) {
         var faces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);
         var people = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Person);
