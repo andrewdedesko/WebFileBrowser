@@ -35,19 +35,19 @@ public class ObjectDetectionService : IObjectDetectionService {
     private IEnumerable<Prediction> _getPredictionsWithObjectDetector(IObjectDetector objectDetector, ImageWrapper image) {
         var cachedPredictions = _findCachedPredictions(objectDetector, image);
         if(cachedPredictions != null) {
-            _logger.LogInformation("Found cached predictions for detector {objectDetectorIdentifier} for {imageShare}:{imagePath} #{imageHash}: found {predictionCount} predictions",
-                objectDetector.GetModelIdentifier(),
-                image.Share,
-                image.Path,
-                image.FileHash,
-                cachedPredictions.Count());
+            // _logger.LogInformation("Found cached predictions for detector {objectDetectorIdentifier} for {imageShare}:{imagePath} #{imageHash}: found {predictionCount} predictions",
+            //     objectDetector.GetModelIdentifier(),
+            //     image.Share,
+            //     image.Path,
+            //     image.FileHash,
+            //     cachedPredictions.Count());
             return cachedPredictions;
         }
 
-        _logger.LogInformation("Prediction cache miss for detector {detectorIdentifier} for {imageShare}:{imagePath}",
-            objectDetector.GetModelIdentifier(),
-            image.Share,
-            image.Path);
+        // _logger.LogInformation("Prediction cache miss for detector {detectorIdentifier} for {imageShare}:{imagePath}",
+        //     objectDetector.GetModelIdentifier(),
+        //     image.Share,
+        //     image.Path);
 
         var predictions = objectDetector.FindObjects(image.Image);
         _cachePredictions(objectDetector, image, predictions);

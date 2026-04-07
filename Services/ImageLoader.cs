@@ -25,9 +25,9 @@ public class ImageLoader {
         if(imageFileHash == null) {
             imageFileHash = Convert.ToHexStringLower(SHA1.HashData(imageFileData));
             _cacheFileHash(share, path, imageFileHash);
-            _logger.LogInformation("File hash cache miss for {share}:{path}", share, path);
+            // _logger.LogInformation("File hash cache miss for {share}:{path}", share, path);
         } else {
-            _logger.LogInformation("File hash cache hit for {hash} {share}:{path}", imageFileHash, share, path);
+            // _logger.LogInformation("File hash cache hit for {hash} {share}:{path}", imageFileHash, share, path);
         }
 
         using(Stream stream = new MemoryStream(imageFileData)) {
