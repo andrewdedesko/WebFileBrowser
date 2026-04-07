@@ -9,12 +9,12 @@ using WebFileBrowser.Services.ObjectDetection;
 namespace WebFileBrowser.Services;
 
 public class ThumbnailAutoCropper : IAutoCropper {
-    private readonly IEnumerable<IObjectDetector> _objectDetectors;
+    private readonly IObjectDetectionService _objectDetectionService;
     private readonly ILogger<ThumbnailAutoCropper> _logger;
 
-    public ThumbnailAutoCropper(IEnumerable<IObjectDetector> objectDetectors, ILogger<ThumbnailAutoCropper> logger) {
-        _objectDetectors = objectDetectors;
+    public ThumbnailAutoCropper(ILogger<ThumbnailAutoCropper> logger, IObjectDetectionService objectDetectionService) {
         _logger = logger;
+        _objectDetectionService = objectDetectionService;
     }
 
     private IEnumerable<Box> _getHumanCropTargets(IEnumerable<Prediction> predictions) {
@@ -682,9 +682,11 @@ public class ThumbnailAutoCropper : IAutoCropper {
     public CropResult? CropImageToPortrait(ThumbnailImage thumbnailImage) {
         Image<Rgb24> image = thumbnailImage.Image;
         List<Prediction> predictions = new();
-        foreach(var detector in _objectDetectors) {
-            predictions.AddRange(detector.FindObjects(image));
-        }
+
+        throw new NotImplementedException("Fix this to use IObjectDetectionService");
+        // foreach(var detector in _objectDetectors) {
+        //     predictions.AddRange(detector.FindObjects(image));
+        // }
 
         var cropResult = _findPortraitCropV2(predictions, image.Width, image.Height);
         if(cropResult?.Box != null) {
@@ -698,20 +700,12 @@ public class ThumbnailAutoCropper : IAutoCropper {
         CropImageToSquareAroundFace(thumbnailImage.Image, annotateImage: annotateImage);
     }
 
-    private IEnumerable<Prediction> _getPredictions(Image<Rgb24> image) {
-        List<Prediction> predictions = new();
-        foreach(var detector in _objectDetectors) {
-            predictions.AddRange(detector.FindObjects(image));
-        }
-
-        return predictions;
-    }
-
     public void CropImageToSquareAroundFace(Image<Rgb24> srcImage, bool annotateImage = false) {
         List<Prediction> predictions = new();
-        foreach(var detector in _objectDetectors) {
-            predictions.AddRange(detector.FindObjects(srcImage));
-        }
+        throw new NotImplementedException("Fix this to use IObjectDetectionService");
+        // foreach(var detector in _objectDetectors) {
+        //     predictions.AddRange(detector.FindObjects(srcImage));
+        // }
 
         IEnumerable<Box> cropTargets = _getHumanCropTargets(predictions);
 
