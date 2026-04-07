@@ -5,6 +5,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using WebFileBrowser.Extensions;
 using WebFileBrowser.Models;
 using WebFileBrowser.Services;
 using WebFileBrowser.Services.ObjectDetection;
@@ -24,14 +25,7 @@ public class ObjectDetectionController : Controller {
     public IActionResult Detect(string share, string path) {
         var faceDetector = new SharpAiFaceDetector();
         using(ImageWrapper sourceImage = _imageLoader.Load(share, path)) {
-            int newWidth = 0;
-            int newHeight = 0;
-            if(sourceImage.Image.Width >= sourceImage.Image.Height) {
-                newWidth = 1024;
-            } else {
-                newHeight = 1024;
-            }
-            sourceImage.Image.Mutate(i => i.Resize(newWidth, newHeight));
+            sourceImage.Image.ResizeImageToMaxDimension(1024);
 
             var predictions = _objectDetectionService.GetPredictions(sourceImage);
 

@@ -17,8 +17,17 @@ public class ObjectDetectionService : IObjectDetectionService {
     }
 
     public IEnumerable<Prediction> GetPredictions(ImageWrapper image) {
-        
         var predictions = _getPredictions(image);
+
+        // Scale predictions to image size
+        foreach(var prediction in predictions) {
+            prediction.Box = new Box(
+                prediction.Box.Left * image.Image.Width,
+                prediction.Box.Top * image.Image.Height,
+                prediction.Box.Right * image.Image.Width,
+                prediction.Box.Bottom * image.Image.Height
+            );
+        }
 
         return predictions;
     }

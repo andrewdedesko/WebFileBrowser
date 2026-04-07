@@ -94,11 +94,12 @@ public class OnnxObjectDetector : IObjectDetector {
                     label = new LabelClass("_unknown_label", DetectedObjectClass.Unknown);
                 }
                 predictions.Add(new Prediction {
+                    // TODO this should return coordinates from 0 - 1 so predictions are still accurate if the image is scaled
                     Box = new Box(
-                        outputSpan[offset + 0] * scaleX,  // x1
-                        outputSpan[offset + 1] * scaleY,  // y1
-                        outputSpan[offset + 2] * scaleX,  // x2
-                        outputSpan[offset + 3] * scaleY   // y2
+                        outputSpan[offset + 0] / 640,  // x1
+                        outputSpan[offset + 1] / 640,  // y1
+                        outputSpan[offset + 2] / 640,  // x2
+                        outputSpan[offset + 3] / 640   // y2
                     ),
                     Label = label.Name,
                     ObjectClass = label.DetectedObjectClass,

@@ -15,7 +15,7 @@ public class SharpAiFaceDetector : IObjectDetector {
             Label = "face",
             ObjectClass = DetectedObjectClass.Face,
             Confidence = f.Confidence ?? 0,
-            Box = new Box(f.Box.Left, f.Box.Top, f.Box.Right, f.Box.Bottom)
+            Box = new Box(f.Box.Left / sourceImage.Width, f.Box.Top / sourceImage.Height, f.Box.Right / sourceImage.Width, f.Box.Bottom / sourceImage.Height)
         });
     }
 
