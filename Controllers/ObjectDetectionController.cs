@@ -13,30 +13,27 @@ namespace WebFileBrowser.Controllers;
 
 [Authorize]
 public class ObjectDetectionController : Controller {
-    private readonly IShareService _shareService;
-    private readonly IEnumerable<IObjectDetector> _customObjectDetectors;
+    private readonly ImageLoader _imageLoader;
+    private readonly IObjectDetectionService _objectDetectionService;
 
-    public ObjectDetectionController(IEnumerable<IObjectDetector> customObjectDetectors, IShareService shareService) {
-        _customObjectDetectors = customObjectDetectors;
-        _shareService = shareService;
+    public ObjectDetectionController(IObjectDetectionService objectDetectionService, ImageLoader imageLoader) {
+        _objectDetectionService = objectDetectionService;
+        _imageLoader = imageLoader;
     }
 
     public IActionResult Detect(string share, string path) {
         var faceDetector = new SharpAiFaceDetector();
-        using(Image<Rgb24> sourceImage = Image.Load<Rgb24>(_shareService.GetPath(share, path))) {
+        using(ImageWrapper sourceImage = _imageLoader.Load(share, path)) {
             int newWidth = 0;
             int newHeight = 0;
-            if(sourceImage.Width >= sourceImage.Height) {
+            if(sourceImage.Image.Width >= sourceImage.Image.Height) {
                 newWidth = 1024;
             } else {
                 newHeight = 1024;
             }
-            sourceImage.Mutate(i => i.Resize(newWidth, newHeight));
+            sourceImage.Image.Mutate(i => i.Resize(newWidth, newHeight));
 
-            List<Prediction> predictions = new();
-            foreach(var detector in _customObjectDetectors){
-                predictions.AddRange(detector.FindObjects(sourceImage));
-            }
+            var predictions = _objectDetectionService.GetPredictions(sourceImage);
 
             const float fontSize = 14f;
             var font = _getFont(fontSize);
@@ -59,7 +56,7 @@ public class ObjectDetectionController : Controller {
                 var pen = Pens.Solid(color, 4);
 
                 // sourceImage.Mutate(i => i.DrawText(label, font, color, new PointF(p.Box.Xmin, p.Box.Ymin)));
-                sourceImage.Mutate(i => i.Draw(pen, new RectangleF(p.Box.Left, p.Box.Top, p.Box.Width, p.Box.Height)));
+                sourceImage.Image.Mutate(i => i.Draw(pen, new RectangleF(p.Box.Left, p.Box.Top, p.Box.Width, p.Box.Height)));
             }
 
             foreach(var p in predictions) {
@@ -84,7 +81,7 @@ public class ObjectDetectionController : Controller {
                     size.Width + (padding * 2),
                     size.Height + (padding * 2));
 
-                sourceImage.Mutate(x => x
+                sourceImage.Image.Mutate(x => x
                     .BackgroundColor(color)
                     .Fill(color, rect) // Draw blue background
                     .DrawText(label, font, Color.White, textLocation) // Draw white text
@@ -92,7 +89,7 @@ public class ObjectDetectionController : Controller {
             }
 
             // return Ok(string.Join(", ", foundObjects));
-            return File(_GetImageAsWebpBytes(sourceImage), "image/webp");
+            return File(_GetImageAsWebpBytes(sourceImage.Image), "image/webp");
         }
     }
 
