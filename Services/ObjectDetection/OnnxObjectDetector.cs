@@ -10,7 +10,7 @@ namespace WebFileBrowser.Services.ObjectDetection;
 
 public class OnnxObjectDetector : IObjectDetector {
     private readonly string _modelPath;
-    private readonly byte[] _modelHash;
+    private readonly string _modelHash;
     private readonly IDictionary<int, LabelClass> _labels;
 
     private readonly ILogger<OnnxObjectDetector> _logger;
@@ -24,7 +24,7 @@ public class OnnxObjectDetector : IObjectDetector {
         _logger = logger;
 
         using(Stream modelStream = File.OpenRead(_modelPath)) {
-            _modelHash = SHA1.HashData(modelStream);
+            _modelHash = Convert.ToHexStringLower(SHA1.HashData(modelStream));
         }
     }
 
@@ -110,7 +110,7 @@ public class OnnxObjectDetector : IObjectDetector {
         return predictions;
     }
 
-    public string GetModelIdentifier() => $"{_modelPath}#{Convert.ToBase64String(_modelHash)}";
+    public string GetModelIdentifier() => $"{_modelPath}#{_modelHash}";
 
     private static IDictionary<int, LabelClass> _labelArrayToDictionary(LabelClass[] labels) {
         Dictionary<int, LabelClass> labelDictionary = new();
