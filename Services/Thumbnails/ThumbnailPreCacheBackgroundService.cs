@@ -27,35 +27,39 @@ public class ThumbnailPreCacheBackgroundService : BackgroundService {
         _performingPreCaching;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-        var precached = _cache.GetString("ThumbnailPrecaching:Complete");
-        if(precached == "true") {
-            _logger.LogInformation("Thumbnail pre-caching already complete");
-            return;
-        }
-
-        _logger.LogInformation("Starting thumbnail pre-caching");
-
-        _performingPreCaching = true;
         try {
-            foreach(var share in _shareService.GetShareNames()) {
-                _logger.LogInformation($"Pre-caching thumbnails for share {share}");
-
-                try {
-                    await PreCacheShareThumbnails(stoppingToken, share);
-                } catch(Exception ex) {
-                    _logger.LogError($"An error occurred while pre caching thumbnails for share {share}", ex);
-                }
-
-                if(stoppingToken.IsCancellationRequested) {
-                    break;
-                }
+            var precached = _cache.GetString("ThumbnailPrecaching:Complete");
+            if(precached == "true") {
+                _logger.LogInformation("Thumbnail pre-caching already complete");
+                return;
             }
 
-            var jobCompleteCacheEntryOptions = new DistributedCacheEntryOptions();
-            jobCompleteCacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromDays(7));
-            _cache.SetString("ThumbnailPrecaching:Complete", "true", jobCompleteCacheEntryOptions);
-        } finally {
-            _performingPreCaching = false;
+            _logger.LogInformation("Starting thumbnail pre-caching");
+
+            _performingPreCaching = true;
+            try {
+                foreach(var share in _shareService.GetShareNames()) {
+                    _logger.LogInformation($"Pre-caching thumbnails for share {share}");
+
+                    try {
+                        await PreCacheShareThumbnails(stoppingToken, share);
+                    } catch(Exception ex) {
+                        _logger.LogError($"An error occurred while pre caching thumbnails for share {share}", ex);
+                    }
+
+                    if(stoppingToken.IsCancellationRequested) {
+                        break;
+                    }
+                }
+
+                var jobCompleteCacheEntryOptions = new DistributedCacheEntryOptions();
+                jobCompleteCacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromDays(7));
+                _cache.SetString("ThumbnailPrecaching:Complete", "true", jobCompleteCacheEntryOptions);
+            } finally {
+                _performingPreCaching = false;
+            }
+        } catch(Exception ex) {
+            _logger.LogError(ex, "An error occurred while pre-caching thumbnails");
         }
     }
 
