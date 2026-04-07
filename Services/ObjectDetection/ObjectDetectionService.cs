@@ -61,6 +61,22 @@ public class ObjectDetectionService : IObjectDetectionService {
 
     private IEnumerable<Prediction>? _findCachedPredictions(IObjectDetector objectDetector, ImageWrapper image) {
         var result = _cache.GetString(_cacheKey(objectDetector, image));
+
+        if(result == null) {
+            // Migrate base64 encoded hashes to hex
+            var hashBytes = Convert.FromHexString(image.FileHash);
+            var base64Hash = Convert.ToBase64String(hashBytes);
+            var base64Key = $"ImageObjectDetectionPredictionCache:{objectDetector.GetModelIdentifier()}:{base64Hash}";
+            result = _cache.GetString(base64Key);
+
+            if(result != null) {
+                _cache.SetString(_cacheKey(objectDetector, image), result);
+                _cache.Remove(base64Key);
+            }
+
+            _logger.LogInformation("Migrated prediction cache for {detectorIdentifier} from {base64Hash} to {hexHash}", objectDetector.GetModelIdentifier(), base64Hash, image.FileHash);
+        }
+
         if(result == null) {
             return null;
         }
