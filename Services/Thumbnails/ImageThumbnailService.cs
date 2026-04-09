@@ -153,16 +153,30 @@ public class ImageThumbnailService : IImageThumbnailService {
     }
 
     public async Task RefreshThumbnailsAsync(string share, string path, int size) {
-        await GetImageThumbnail(share, path, size, refreshCache: true);
+        Queue<string> paths = new();
+        paths.Enqueue(path);
 
-        var directories = _browseService.GetDirectories(share, path);
-        foreach(var directory in directories) {
-            await RefreshThumbnailAsync(share, directory, size);
-        }
+        // await GetImageThumbnail(share, path, size, refreshCache: true);
 
-        var files = _browseService.GetFiles(share, path);
-        foreach(var file in files) {
-            await RefreshThumbnailAsync(share, file, size);
+        while(paths.Any()) {
+            var currentPath = paths.Dequeue();
+            // _logger.LogInformation("Queueing {share}:{path} for thumbnail refresh", share, currentPath);
+            await _backgroundThumbnailQueue.EnqueueAsync(new ThumbnailTask() {
+                Share = share,
+                Path = currentPath
+            });
+
+            if(_browseService.IsDirectory(share, currentPath)) {
+                var directories = _browseService.GetDirectories(share, currentPath);
+                foreach(var directory in directories) {
+                    paths.Enqueue(directory);
+                }
+
+                // var files = _browseService.GetFiles(share, path);
+                // foreach(var file in files) {
+                //     paths.Enqueue(file);
+                // }
+            }
         }
     }
 
