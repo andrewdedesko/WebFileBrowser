@@ -90,8 +90,8 @@ public class ThumbnailAutoCropper : IAutoCropper {
         return Enumerable.Empty<Box>();
     }
 
-    public CropResult? FindCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions) =>
-        FindFaceSquareCrop(imageWidth, imageHeight, predictions, image: null, annotateImage: false);
+    public CropResult? FindCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions, Image<Rgb24> image) =>
+        FindFaceSquareCrop(imageWidth, imageHeight, predictions, image, annotateImage: false);
 
     public CropResult? FindFaceSquareCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions, Image<Rgb24> image, bool annotateImage = false) {
         var allFaces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);

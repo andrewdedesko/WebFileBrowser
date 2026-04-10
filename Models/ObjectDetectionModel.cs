@@ -5,6 +5,9 @@ public class Prediction {
     public string Label { get; set; }
     public DetectedObjectClass ObjectClass {get; set;}
     public float Confidence { get; set; }
+
+    public static Box GetBoundingBox(IEnumerable<Prediction> predictions) =>
+        Box.GetBoundingBox(predictions.Select(p => p.Box));
 }
 
 public enum DetectedObjectClass {
@@ -38,6 +41,39 @@ public record Box {
     public float Height => Ymax - Ymin;
 
     public float Area => Width * Height;
+
+    public static bool AreOverlapping(Prediction a, Prediction b) {
+        return GetOverlappingPercentage(a.Box, b.Box) >= 0.75;
+    }
+
+    public static float GetOverlappingPercentage(Box a, Box b) {
+        var overlappingArea = GetOverlappingArea(a, b);
+        var smallestArea = Math.Min(a.Area, b.Area);
+        return overlappingArea / smallestArea;
+    }
+
+    public static float GetOverlappingArea(Box a, Box b) {
+        float left = Math.Max(a.Left, b.Left);
+        float right = Math.Min(a.Right, b.Right);
+
+        float top = Math.Max(a.Top, b.Top);
+        float bottom = Math.Min(a.Bottom, b.Bottom);
+
+        return Math.Max(0, right - left) * Math.Max(0, bottom - top);
+    }
+
+    public static Box GetBoundingBox(IEnumerable<Box> boxes) {
+        if(!boxes.Any()) {
+            throw new ArgumentException("boxes cannot be empty");
+        }
+
+        var left = boxes.Min(b => b.Left);
+        var right = boxes.Max(b => b.Right);
+        var top = boxes.Min(b => b.Top);
+        var bottom = boxes.Max(b => b.Bottom);
+
+        return new Box(left, top, right, bottom);
+    }
 }
 
 public record LabelClass(string Name, DetectedObjectClass DetectedObjectClass) {

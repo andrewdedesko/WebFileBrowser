@@ -65,9 +65,8 @@ public class DirectoryThumbnailer {
             // using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
             using(var imageWrapper = _imageLoader.Load(share, currentPath)){
                 var image = imageWrapper.Image;
-                // var predictions = _thumbnailAutoCropper.FindPredictions(image);
                 var predictions = _objectDetectionService.GetPredictions(imageWrapper);
-                CropResult? cropResult = _autoCropper.FindCrop(image.Width, image.Height, predictions);
+                CropResult? cropResult = _autoCropper.FindCrop(image.Width, image.Height, predictions, image);
                 if(cropResult != null) {
                     thumbnailOptions.Add(new Tuple<string, CropResult>(currentPath, cropResult));
 
