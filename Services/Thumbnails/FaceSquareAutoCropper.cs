@@ -102,6 +102,7 @@ public class FaceSquareAutoCropper : IAutoCropper {
         if(allPeople.Any()) {
             var peopleBoundingBox = Prediction.GetBoundingBox(allPeople);
 
+            // All detected people fit inside the crop
             if(peopleBoundingBox.Width <= cropSize && peopleBoundingBox.Height <= cropSize) {
                 cropLeft = (int)Math.Floor(peopleBoundingBox.Left - ((smallestImageDimension - peopleBoundingBox.Width) / 2));
                 cropTop = (int)Math.Floor(peopleBoundingBox.Top - ((smallestImageDimension - peopleBoundingBox.Height) / 2));
@@ -109,6 +110,9 @@ public class FaceSquareAutoCropper : IAutoCropper {
                 score *= 1.25;
 
             } else {
+
+                var greatestFaceToBodyRatio = peopleByFace.Keys
+                    .Max(face => face.Box.Area / Prediction.GetBoundingBox(peopleByFace[face]).Area);
 
                 if(imageWidth > imageHeight) {
                     if(facesBoundingBox.Width > smallestImageDimension) {
@@ -127,6 +131,8 @@ public class FaceSquareAutoCropper : IAutoCropper {
                     }
 
                     var facesMiddle = facesBoundingBox.Top + facesBoundingBox.Height / 2;
+
+                    if(greatestFaceToBodyRatio < 0.2){
                     var verticalFacePosition = (facesMiddle - peopleBoundingBox.Top) / peopleBoundingBox.Height;
                     double facePadding = 0;
                     if(facesMiddle / imageHeight <= 0.5) {
@@ -135,8 +141,13 @@ public class FaceSquareAutoCropper : IAutoCropper {
                         facePadding = facesBoundingBox.Height * 0.5;
                     }
                     var faceMiddle = (facesBoundingBox.Top + facePadding) + facesBoundingBox.Height / 2;
-                    var cropBoxOffset = cropSize * verticalFacePosition;
+                    var cropBoxOffset = cropSize / 2 * verticalFacePosition;
                     cropTop = (int)Math.Floor(faceMiddle - cropBoxOffset);
+                    }else{
+
+                    var facesVerticalMiddle = (facesBoundingBox.Top + facesBoundingBox.Height / 2);
+                    cropTop = (int)Math.Floor(facesVerticalMiddle - cropSize / 2);
+                    }
                 }
 
                 var facesCropArea = Box.GetOverlappingArea(facesBoundingBox, new Box(cropLeft, cropTop, cropLeft + cropSize, cropTop + cropSize));
