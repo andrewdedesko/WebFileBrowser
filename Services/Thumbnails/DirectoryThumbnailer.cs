@@ -62,7 +62,6 @@ public class DirectoryThumbnailer {
             }
 
             try {
-            // using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, currentPath))) {
             using(var imageWrapper = _imageLoader.Load(share, currentPath)){
                 var image = imageWrapper.Image;
                 var predictions = _objectDetectionService.GetPredictions(imageWrapper);
@@ -93,7 +92,7 @@ public class DirectoryThumbnailer {
 
         while(pathQueue.Any()) {
             var currPath = pathQueue.Dequeue();
-            if(_browseService.IsFile(share, currPath)) {
+            if(_browseService.IsFile(share, currPath) && _fileTypeService.IsImage(share, currPath)) {
                 yield return currPath;
 
             } else if(_browseService.IsDirectory(share, currPath)) {
