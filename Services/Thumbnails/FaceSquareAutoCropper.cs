@@ -95,6 +95,23 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
                 var areaPercentageOfImage = face.Box.Area * 100 / (float)(imageWidth * imageHeight);
                 var areaPercentageOfPeople = face.Box.Area * 100 / Prediction.GetBoundingBox(peopleByFace[face]).Area;
                 annotations.Add(face.Box, $"face (p: {areaPercentageOfPeople:0.}% i: {areaPercentageOfImage:0.}%)", System.Drawing.Color.HotPink);
+
+                // Extreme close up
+                if(areaPercentageOfPeople >= 0.5) {
+                    score *= 0.5;
+
+                // Close up
+                }else if(areaPercentageOfPeople >= 0.2) {
+                    score *= 0.5;
+
+                // Mid-shot
+                }else if(areaPercentageOfPeople >= 0.1) {
+                    score *= 1.25;
+
+                    // Full body
+                } else {
+                    score *= 1.25;
+                }
             }
 
             var peopleBoundingBox = Prediction.GetBoundingBox(allPeople);
@@ -152,6 +169,11 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
 
                 if(facesCropArea / peopleCropArea >= 0.75) {
                     score *= Math.Clamp(1 - facesCropArea / peopleCropArea, 0.25, 1);
+                }
+
+                var peopleCroppedOutArea = peopleBoundingBox.Area - peopleCropArea;
+                if((peopleCroppedOutArea / peopleBoundingBox.Area) >= 0.25){
+                    score *= 1 - (peopleCroppedOutArea / peopleBoundingBox.Area);
                 }
             }
         } else {

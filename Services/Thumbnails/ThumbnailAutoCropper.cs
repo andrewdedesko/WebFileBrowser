@@ -214,6 +214,13 @@ public class ThumbnailAutoCropper : IAutoCropper {
                     var cropBoxOffset = cropSize * verticalFacePosition;
                     cropTop = (int)Math.Floor(faceMiddle - cropBoxOffset);
                 }
+
+                var facesCropArea = _getOverlappingArea(facesBoundingBox, new Box(cropLeft, cropTop, cropLeft + cropSize, cropTop + cropSize));
+                var peopleCropArea = _getOverlappingArea(peopleBoundingBox, new Box(cropLeft, cropTop, cropLeft + cropSize, cropTop + cropSize));
+
+                if(facesCropArea / peopleCropArea >= 0.75) {
+                    score *= Math.Clamp(1 - facesCropArea / peopleCropArea, 0.25, 1);
+                }
             }
         } else {
             if(imageWidth > imageHeight) {
