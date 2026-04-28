@@ -7,12 +7,7 @@ using WebFileBrowser.Models;
 
 namespace WebFileBrowser.Services;
 
-public class FaceSquareAutoCropper : IAutoCropper {
-    private readonly ILogger<FaceSquareAutoCropper> _logger;
-
-    public FaceSquareAutoCropper(ILogger<FaceSquareAutoCropper> logger) {
-        _logger = logger;
-    }
+public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<FaceSquareAutoCropper> _logger) : IAutoCropper {
 
     public CropResult? FindCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions, Image<Rgb24> image) =>
         FindFaceSquareCrop(imageWidth, imageHeight, predictions, image, annotateImage: false);
@@ -211,6 +206,18 @@ public class FaceSquareAutoCropper : IAutoCropper {
             score *= facesCropPaddedOverlap;
         }
 
+        score = _applyCropBoosts(predictions, score, new BoxI(cropLeft, cropTop, cropLeft + cropSize, cropTop + cropSize));
+
         return new CropResult(new Rectangle(cropLeft, cropTop, cropSize, cropSize), score);
+    }
+
+    private double _applyCropBoosts(IEnumerable<Prediction> predictions, double score, BoxI cropRegion) {
+        foreach(var boost in _cropBoosts) {
+            if(predictions.Any(p => p.Label == boost.LabelName && p.Box.IsOverlapping(cropRegion))) {
+                score *= boost.Boost;
+            }
+        }
+
+        return score;
     }
 }

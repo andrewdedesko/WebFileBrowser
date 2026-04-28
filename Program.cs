@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using WebFileBrowser.Configuration;
+using WebFileBrowser.Models;
 using WebFileBrowser.Services;
 using WebFileBrowser.Services.ObjectDetection;
 
@@ -49,6 +50,14 @@ if(objectDetectionModels != null) {
     foreach(var objectDetectionModel in objectDetectionModels) {
         builder.Services.AddSingleton(ctx => objectDetectorLoader.LoadObjectDetector(objectDetectionModel, ctx.GetService<ILogger<OnnxObjectDetector>>()));
     }
+}
+
+var thumbnailCropBoostConfig = builder.Configuration.GetSection("ThumbnailCropBoosts")?.Get<IDictionary<string, double>>();
+if(thumbnailCropBoostConfig != null) {
+    var thumbnailCropBoosts = thumbnailCropBoostConfig.Select(kv => new CropBoost(kv.Key, kv.Value));
+    builder.Services.AddSingleton<IEnumerable<CropBoost>>(thumbnailCropBoosts);
+} else {
+    builder.Services.AddSingleton<IEnumerable<CropBoost>>(Enumerable.Empty<CropBoost>());
 }
 
 var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
