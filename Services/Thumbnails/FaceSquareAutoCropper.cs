@@ -91,6 +91,12 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
         var facesBoundingBox = Box.GetBoundingBox(faceCropTargets);
 
         if(allPeople.Any()) {
+            foreach(var face in faces) {
+                var areaPercentageOfImage = face.Box.Area * 100 / (float)(imageWidth * imageHeight);
+                var areaPercentageOfPeople = face.Box.Area * 100 / Prediction.GetBoundingBox(peopleByFace[face]).Area;
+                annotations.Add(face.Box, $"face (p: {areaPercentageOfPeople:0.}% i: {areaPercentageOfImage:0.}%)", System.Drawing.Color.HotPink);
+            }
+
             var peopleBoundingBox = Prediction.GetBoundingBox(allPeople);
 
             // All detected people fit inside the crop
