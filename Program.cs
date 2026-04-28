@@ -41,6 +41,14 @@ if(thumbnailPreCachingEnabled){
 builder.Services.AddSingleton<IObjectDetector, SharpAiFaceDetector>();
 builder.Services.AddSingleton<IObjectDetector, YoloCocoObjectDetector>();
 
+var objectDetectionModels = builder.Configuration.GetSection("ObjectDetectionModels")?.Get<IEnumerable<string>>();
+if(objectDetectionModels != null) {
+    var objectDetectorLoader = new ObjectDetectorLoader();
+    foreach(var objectDetectionModel in objectDetectionModels) {
+        builder.Services.AddSingleton(ctx => objectDetectorLoader.LoadObjectDetector(objectDetectionModel, ctx.GetService<ILogger<OnnxObjectDetector>>()));
+    }
+}
+
 var cacheType = builder.Configuration.GetSection("Caching")?.GetValue<string>("CacheType")?.ToLower();
 if(cacheType == "redis") {
     builder.Services.AddStackExchangeRedisCache(options =>
