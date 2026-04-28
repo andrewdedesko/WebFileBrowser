@@ -18,6 +18,11 @@ public enum DetectedObjectClass {
     Furniture
 }
 
+public record BoxI(int Left, int Top, int Right, int Bottom) {
+    public int Width => Right - Left;
+    public int Height => Bottom - Top;
+}
+
 public record Box {
     public float Xmin { get; init; }
     public float Ymin { get; init; }
@@ -42,9 +47,17 @@ public record Box {
 
     public float Area => Width * Height;
 
-    public static bool AreOverlapping(Prediction a, Prediction b) {
-        return GetOverlappingPercentage(a.Box, b.Box) >= 0.75;
-    }
+    public bool IsOverlapping(Box otherBox) =>
+        AreOverlapping(this, otherBox);
+    
+    public bool IsOverlapping(Prediction prediction) =>
+        IsOverlapping(prediction.Box);
+
+    public static bool AreOverlapping(Prediction a, Prediction b) =>
+        AreOverlapping(a.Box, b.Box);
+
+    public static bool AreOverlapping(Box a, Box b) =>
+        GetOverlappingPercentage(a, b) >= 0.75;
 
     public static float GetOverlappingPercentage(Box a, Box b) {
         var overlappingArea = GetOverlappingArea(a, b);
