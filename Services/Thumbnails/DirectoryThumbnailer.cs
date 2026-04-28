@@ -78,7 +78,7 @@ public class DirectoryThumbnailer {
                 _logger.LogError(ex, "Failed to analyse image {share}:{currentPath}", share, currentPath);
             }
 
-            if(++attempts >= 10) {
+            if(++attempts >= 16) {
                 break;
             }
         }
