@@ -35,46 +35,6 @@ public class ThumbnailController : Controller {
         _directoryThumbnailer = directoryThumbnailer;
     }
 
-    public IActionResult Index(string share, string path) {
-        string targetPath = path;
-
-        List<string> targetNodeOptions = new();
-        string[] pathComponents = path.Split("/");
-        string currentPath = "";
-        foreach(var component in pathComponents) {
-            currentPath = Path.Combine(currentPath, component);
-
-            if(_browseService.IsDirectory(share, currentPath)) {
-                targetNodeOptions.Add(currentPath);
-            }
-        }
-        return View("SetThumbnail", new SetThumbnailViewModel() {
-            Share = share,
-            TargetPath = targetPath,
-            SourcePath = path,
-            TargetNodeOptions = targetNodeOptions
-        });
-    }
-
-    // [HttpPost]
-    // public async Task<IActionResult> SetThumbnail(string share, string path, string thumbnailSourcePath, string croppingOption) {
-    //     var thumbnailConfig = new ThumbnailConfig() {
-    //         Thumbnail = Path.GetRelativePath(_shareService.GetPath(share, path), _shareService.GetPath(share, thumbnailSourcePath)),
-    //         // CropMethod = croppingOption
-    //     };
-
-
-    //     string thumbnailConfigPath = Path.Combine(_shareService.GetPath(share, path), ".thumbnail.json");
-    //     Console.WriteLine($"Saving thumbnail config: {thumbnailConfigPath}");
-    //     using(var fileStream = System.IO.File.Create(thumbnailConfigPath)) {
-    //         await JsonSerializer.SerializeAsync(fileStream, thumbnailConfig);
-    //     }
-
-    //     // await _imageThumbnailService.GenerateThumbnailAsync(share, path, thumbnailSourcePath, cropper: croppingOption);
-    //     await _imageThumbnailService.RefreshThumbnailAsync(share, path);
-    //     return Ok();
-    // }
-
     public IActionResult Explain(string share, string path, int size = 800, int imageCount = 6) {
         if(_browseService.IsFile(share, path)) {
             return _explainSingleImage(share, path, size);
