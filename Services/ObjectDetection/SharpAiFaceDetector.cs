@@ -20,4 +20,5 @@ public class SharpAiFaceDetector : IObjectDetector {
     }
 
     public string GetModelIdentifier() => "SharpAiFaceDetector";
+    public string GetOldModelIdentifier() => "SharpAiFaceDetector";
 }

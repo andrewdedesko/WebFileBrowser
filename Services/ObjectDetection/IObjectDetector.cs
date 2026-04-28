@@ -7,4 +7,5 @@ namespace WebFileBrowser.Services.ObjectDetection;
 public interface IObjectDetector {
     public IEnumerable<Prediction> FindObjects(Image<Rgb24> sourceImage);
     string GetModelIdentifier();
+    string GetOldModelIdentifier();
 }

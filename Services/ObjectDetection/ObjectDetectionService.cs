@@ -69,16 +69,31 @@ public class ObjectDetectionService : IObjectDetectionService {
     }
 
     private IEnumerable<Prediction>? _findCachedPredictions(IObjectDetector objectDetector, ImageWrapper image) {
-        var result = _cache.GetString(_cacheKey(objectDetector, image));
-        if(result == null) {
-            return null;
+        string? result;
+
+        // Find cache with new model key
+        result = _cache.GetString(_cacheKey(objectDetector, image));
+        if(result != null) {
+            return JsonSerializer.Deserialize<CachedPredictions>(result)?.Predictions;
         }
 
-        return JsonSerializer.Deserialize<CachedPredictions>(result)?.Predictions;
+        // Find cache with old model key and migrate to new key
+        result = _cache.GetString(_oldCacheKey(objectDetector, image));
+        if(result != null) {
+            _cache.SetString(_cacheKey(objectDetector, image), result);
+            _cache.Remove(_oldCacheKey(objectDetector, image));
+            _logger.LogInformation("Migrated prediction cache from {oldKey} to {newKey}", _oldCacheKey(objectDetector, image), _cacheKey(objectDetector, image));
+            return JsonSerializer.Deserialize<CachedPredictions>(result)?.Predictions;
+        }
+
+        return null;
     }
 
     private string _cacheKey(IObjectDetector objectDetector, ImageWrapper imageWrapper) =>
         $"ImageObjectDetectionPredictionCache:{objectDetector.GetModelIdentifier()}:{imageWrapper.FileHash}";
+
+    private string _oldCacheKey(IObjectDetector objectDetector, ImageWrapper imageWrapper) =>
+        $"ImageObjectDetectionPredictionCache:{objectDetector.GetOldModelIdentifier()}:{imageWrapper.FileHash}";
 
     private record CachedPredictions {
         [JsonPropertyName("predictions")]

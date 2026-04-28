@@ -111,7 +111,9 @@ public class OnnxObjectDetector : IObjectDetector {
         return predictions;
     }
 
-    public string GetModelIdentifier() => $"{_modelPath}#{_modelHash}";
+    public string GetModelIdentifier() => $"{_modelHash}";
+
+    public string GetOldModelIdentifier() => $"{_modelPath}#{_modelHash}";
 
     private static IDictionary<int, LabelClass> _labelArrayToDictionary(LabelClass[] labels) {
         Dictionary<int, LabelClass> labelDictionary = new();
