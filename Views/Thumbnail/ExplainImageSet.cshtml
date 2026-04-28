@@ -1,0 +1,101 @@
+@model IEnumerable<ThumbnailResultViewModel>
+
+<div class="row">
+    <div class="col">
+        <h1>Thumbnail Results</h1>
+        <section>
+            @foreach (var result in Model)
+            {
+                <article>
+                    <div class="thumbnail-result">
+                        <div class="image">
+                            <img src="@Url.Action("Image", "Browse", new { share = result.Share, path = result.Path })" />
+                        </div>
+
+                        <div class="attributes">
+                            <dl>
+                                <dt>Image</dt>
+                                <dd>@result.Path</dd>
+
+                                <dt>Predictions in Full Image</dt>
+                                <dd>
+                                    <ul>
+                                        @foreach (var predictionCount in result.PredictionCounts.OrderBy(c => c.Key))
+                                        {
+                                            <li>@predictionCount.Value x @predictionCount.Key</li>
+                                        }
+                                    </ul>
+                                </dd>
+
+                                <dt>Found Crop?</dt>
+                                <dd>@(result.CropResult != null ? "Yes" : "No")</dd>
+
+                                @if (result.CropResult != null)
+                                {
+                                    <dt>Score</dt>
+                                    <dd>@result.CropResult.Score.ToString("F2")</dd>
+
+                                    <dt>Predictions in Crop Region</dt>
+                                    <dd>
+                                        <ul>
+                                            @foreach(var predictionCount in result.CropResult.PredictionCountsInCrop){
+                                                <li>@predictionCount.Value x @predictionCount.Key</li>
+                                            }
+                                        </ul>
+                                    </dd>
+                                }
+                            </dl>
+
+                            <a href="@Url.Action("Detect", "ObjectDetection", new { share = result.Share, path = result.Path })"
+                               target="_blank">Object Detection</a>
+                            <a href="@Url.Action("Explain", new {share = result.Share, path = result.Path})" target="_blank">Explain</a>
+                        </div>
+                    </div>
+                </article>
+            }
+        </section>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        article{
+            margin-bottom: 32px;
+        }
+
+        div.thumbnail-result {
+            display: flex;
+        }
+
+        div.thumbnail-result div.image {
+            width: 400px;
+            height: 400px;
+        }
+
+        div.thumbnail-result div.image>img {
+            max-width: 400px;
+            max-height: 400px;
+            object-fit: contain;
+
+            image-orientation: none;
+        }
+
+        div.thumbnail-result div.attributes{
+            margin-left: 32px;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: max-content auto;
+        }
+
+        dt {
+            grid-column-start: 1;
+            padding-right: 16px;
+        }
+
+        dd {
+            grid-column-start: 2;
+        }
+    </style>
+}
