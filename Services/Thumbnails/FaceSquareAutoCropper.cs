@@ -129,21 +129,21 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
 
                     var facesMiddle = facesBoundingBox.Top + facesBoundingBox.Height / 2;
 
-                    if(greatestFaceToBodyRatio < 0.2){
-                    var verticalFacePosition = (facesMiddle - peopleBoundingBox.Top) / peopleBoundingBox.Height;
-                    double facePadding = 0;
-                    if(facesMiddle / imageHeight <= 0.5) {
-                        facePadding = facesBoundingBox.Height * -0.25;
+                    if(greatestFaceToBodyRatio < 0.2) {
+                        var verticalFacePosition = (facesMiddle - peopleBoundingBox.Top) / peopleBoundingBox.Height;
+                        double facePadding = 0;
+                        if(facesMiddle / imageHeight <= 0.5) {
+                            facePadding = facesBoundingBox.Height * -0.25;
+                        } else {
+                            facePadding = facesBoundingBox.Height * 0.5;
+                        }
+                        var faceMiddle = (facesBoundingBox.Top + facePadding) + facesBoundingBox.Height / 2;
+                        var cropBoxOffset = cropSize * verticalFacePosition;
+                        cropTop = (int)Math.Floor(faceMiddle - cropBoxOffset);
                     } else {
-                        facePadding = facesBoundingBox.Height * 0.5;
-                    }
-                    var faceMiddle = (facesBoundingBox.Top + facePadding) + facesBoundingBox.Height / 2;
-                    var cropBoxOffset = cropSize / 2 * verticalFacePosition;
-                    cropTop = (int)Math.Floor(faceMiddle - cropBoxOffset);
-                    }else{
 
-                    var facesVerticalMiddle = (facesBoundingBox.Top + facesBoundingBox.Height / 2);
-                    cropTop = (int)Math.Floor(facesVerticalMiddle - cropSize / 2);
+                        var facesVerticalMiddle = (facesBoundingBox.Top + facesBoundingBox.Height / 2);
+                        cropTop = (int)Math.Floor(facesVerticalMiddle - cropSize / 2);
                     }
                 }
 
