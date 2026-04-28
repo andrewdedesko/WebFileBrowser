@@ -49,6 +49,7 @@ public class BrowseController : Controller
             PathComponents = Enumerable.Empty<PathViewModel>(),
             Directories = directoryViewModels,
             Files = Enumerable.Empty<FileViewModel>(),
+            ViewType = "List",
             ShowImageGalleryView = false
         });
     }
@@ -189,7 +190,7 @@ public class BrowseController : Controller
         var imagePath = Path.Join(_shareService.GetSharePath(share), path);
         
         var image = System.IO.File.OpenRead(imagePath);
-        string mimeType;
+        string? mimeType;
         if (!new FileExtensionContentTypeProvider().TryGetContentType(imagePath, out mimeType))
         {
             throw new Exception("Unsupported type");
