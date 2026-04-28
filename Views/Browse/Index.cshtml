@@ -60,6 +60,9 @@
                 <a href="@Url.Action("RefreshThumbnails", "Browse", new { share = Model.Share, path = Model.Path })"
                     class="btn btn-sm btn-secondary" role="button">Refresh Thumbnails</a>
             </div>
+
+            <a href="@Url.Action("Explain", "Thumbnail", new { share = Model.Share, path = Model.Path })"
+               class="btn btn-sm btn-secondary" role="button">Explain Thumbnails</a>
         </section>
     </div>
 </div>
