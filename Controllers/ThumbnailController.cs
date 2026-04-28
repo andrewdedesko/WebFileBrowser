@@ -51,7 +51,7 @@ public class ThumbnailController : Controller {
         foreach(var path in paths) {
             using(var imageWrapper = _imageLoader.Load(share, path)) {
                 var predictions = _objectDetectionService.GetPredictions(imageWrapper);
-                var cropResult = _thumbnailAutoCropper.FindCrop(imageWrapper.Image.Width, imageWrapper.Image.Height, predictions, imageWrapper.Image);
+                var cropResult = _thumbnailAutoCropper.FindCrop(imageWrapper.Image.Width, imageWrapper.Image.Height, predictions);
 
                 var countedPredictions = predictions.CountBy(p => p.Label);
 
@@ -87,11 +87,20 @@ public class ThumbnailController : Controller {
         image.ResizeImageToMaxDimension(size);
 
         var predictions = _objectDetectionService.GetPredictions(imageWrapper);
-        var cropResult = _thumbnailAutoCropper.FindFaceSquareCrop(image.Width, image.Height, predictions, image, annotateImage: true);
+        var cropResult = _thumbnailAutoCropper.FindFaceSquareCrop(image.Width, image.Height, predictions);
 
         if(cropResult != null) {
             var pen = Pens.Solid(Color.RebeccaPurple, 4);
             image.Mutate(i => i.Draw(pen, cropResult.Box));
+
+            foreach(var annotation in cropResult.Annotations) {
+                var annotationPen = Pens.Dot(SixLabors.ImageSharp.Color.SeaGreen, 2);
+                image.Mutate(i => i.Draw(annotationPen, annotation.Box.AsRectangle()));
+            }
+
+            foreach(var annotation in cropResult.Annotations) {
+                image.Mutate(i => i.DrawTextWithBackground(annotation.Label, Color.Black, Color.SeaGreen, annotation.Box.Left + 5, annotation.Box.Top + 5));
+            }
         }
 
         var cropSummaryLabel = cropResult != null ? $"Score: {cropResult.Score:0.00}" : "No Crop";
@@ -107,7 +116,7 @@ public class ThumbnailController : Controller {
 
         // _thumbnailAutoCropper.CropImageToSquareAroundFace(image, annotateImage: true);
         var predictions = _objectDetectionService.GetPredictions(imageWrapper);
-        var cropResult = _thumbnailAutoCropper.FindFaceSquareCrop(image.Width, image.Height, predictions, image);
+        var cropResult = _thumbnailAutoCropper.FindFaceSquareCrop(image.Width, image.Height, predictions);
 
         image.Mutate(i => i.Crop(cropResult.Box));
         image.ResizeImageToMaxDimension(size);

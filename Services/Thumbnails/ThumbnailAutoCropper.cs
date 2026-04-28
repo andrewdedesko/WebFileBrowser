@@ -90,10 +90,10 @@ public class ThumbnailAutoCropper : IAutoCropper {
         return Enumerable.Empty<Box>();
     }
 
-    public CropResult? FindCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions, Image<Rgb24> image) =>
-        FindFaceSquareCrop(imageWidth, imageHeight, predictions, image, annotateImage: false);
+    public CropResult? FindCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions) =>
+        FindFaceSquareCrop(imageWidth, imageHeight, predictions);
 
-    public CropResult? FindFaceSquareCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions, Image<Rgb24> image, bool annotateImage = false) {
+    public CropResult? FindFaceSquareCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions) {
         var allFaces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);
 
         if(!allFaces.Any()) {
@@ -152,17 +152,17 @@ public class ThumbnailAutoCropper : IAutoCropper {
             });
 
 
-        if(annotateImage) {
-            var facePen = Pens.Dash(Color.HotPink, 2);
-            foreach(var cropTarget in faceCropTargets) {
-                image.Mutate(i => i.Draw(facePen, cropTarget.AsRectangle()));
-            }
+        // if(annotateImage) {
+        //     var facePen = Pens.Dash(Color.HotPink, 2);
+        //     foreach(var cropTarget in faceCropTargets) {
+        //         image.Mutate(i => i.Draw(facePen, cropTarget.AsRectangle()));
+        //     }
 
-            var personPen = Pens.Dash(Color.SeaGreen, 2);
-            foreach(var person in peopleByFace.SelectMany(pair => pair.Value)) {
-                image.Mutate(i => i.Draw(personPen, person.Box.AsRectangle()));
-            }
-        }
+        //     var personPen = Pens.Dash(Color.SeaGreen, 2);
+        //     foreach(var person in peopleByFace.SelectMany(pair => pair.Value)) {
+        //         image.Mutate(i => i.Draw(personPen, person.Box.AsRectangle()));
+        //     }
+        // }
 
         double score = 1;
         if(faces.Count() != predictions.Count(p => p.ObjectClass == DetectedObjectClass.Person)) {
@@ -250,9 +250,9 @@ public class ThumbnailAutoCropper : IAutoCropper {
         }
 
         var cropBox = new Box(cropLeft, cropTop, cropLeft + cropSize, cropTop + cropSize);
-        if(annotateImage) {
-            image.Mutate(i => i.Draw(Pens.Dot(Color.Azure, 2), cropBox.AsRectangle()));
-        }
+        // if(annotateImage) {
+        //     image.Mutate(i => i.Draw(Pens.Dot(Color.Azure, 2), cropBox.AsRectangle()));
+        // }
         var facesCropOverlap = _getOverlappingPercentage(facesBoundingBox, cropBox);
 
         if(facesCropOverlap < 1) {
@@ -261,15 +261,16 @@ public class ThumbnailAutoCropper : IAutoCropper {
 
         var cropPadding = 0.05f;
         var cropBoxPadded = new Box(cropLeft + (cropSize * cropPadding), cropTop + (cropSize * cropPadding), cropLeft + cropSize * (1 - cropPadding), cropTop + cropSize * (1 - cropPadding));
-        if(annotateImage) {
-            image.Mutate(i => i.Draw(Pens.Dot(Color.Azure, 2), cropBoxPadded.AsRectangle()));
-        }
+        // if(annotateImage) {
+        //     image.Mutate(i => i.Draw(Pens.Dot(Color.Azure, 2), cropBoxPadded.AsRectangle()));
+        // }
         var facesCropPaddedOverlap = _getOverlappingPercentage(facesBoundingBox, cropBoxPadded);
         if(facesCropPaddedOverlap < 1) {
             score *= facesCropPaddedOverlap;
         }
 
-        return new CropResult(new Rectangle(cropLeft, cropTop, cropSize, cropSize), score);
+        throw new NotImplementedException("Annontations are not implemented");
+        // return new CropResult(new Rectangle(cropLeft, cropTop, cropSize, cropSize), score);
     }
 
     private Box _clampCropToImageBoundaries(Box crop, int imageWidth, int imageHeight) {
@@ -676,7 +677,9 @@ public class ThumbnailAutoCropper : IAutoCropper {
         finalScore = Math.Clamp(finalScore, 0f, 1f);
 
         var box = new Box(xmin: x1, ymin: y1, xmax: x2, ymax: y2);
-        return new CropResult(box.AsRectangle(), finalScore);
+        
+        throw new NotImplementedException("Annontations are not implemented");
+        // return new CropResult(box.AsRectangle(), finalScore);
     }
 
     public CropResult? CropImageToPortrait(ThumbnailImage thumbnailImage) {
@@ -918,7 +921,8 @@ public class ThumbnailAutoCropper : IAutoCropper {
                 srcImage.Mutate(i => i.Draw(cropPen, cropRectangle));
             }
 
-            return new CropResult(cropRectangle, cropScore);
+            throw new NotImplementedException("Annotations haven't been implemented");
+            // return new CropResult(cropRectangle, cropScore);
         }
 
         return null;
@@ -954,4 +958,4 @@ public class ThumbnailAutoCropper : IAutoCropper {
     }
 }
 
-public record CropResult(Rectangle Box, double Score);
+public record CropResult(Rectangle Box, double Score, IEnumerable<Annotation> Annotations);

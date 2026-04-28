@@ -49,6 +49,9 @@ public record Box {
 
     public bool IsOverlapping(BoxI otherBox) =>
         AreOverlapping(this, new Box(otherBox.Left, otherBox.Top, otherBox.Right, otherBox.Bottom));
+    
+    public BoxI AsBoxI() =>
+        new BoxI((int)Math.Floor(Left), (int)Math.Floor(Top), (int)Math.Floor(Right), (int)Math.Floor(Bottom));
 
     public bool IsOverlapping(Box otherBox) =>
         AreOverlapping(this, otherBox);

@@ -61,6 +61,10 @@ public static class SixLaborsImageExtensions {
         return new Rectangle((int)Math.Floor(box.Left), (int)Math.Floor(box.Top), (int)Math.Floor(box.Width), (int)Math.Floor(box.Height));
     }
 
+    public static Rectangle AsRectangle(this BoxI box) {
+        return new Rectangle(box.Left, box.Top, box.Width, box.Height);
+    }
+
     public static Box AsBox(this Rectangle rectangle) =>
         new Box(rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom);
 

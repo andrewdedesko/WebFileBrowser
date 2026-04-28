@@ -8,11 +8,12 @@ using WebFileBrowser.Models;
 namespace WebFileBrowser.Services;
 
 public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<FaceSquareAutoCropper> _logger) : IAutoCropper {
+    public CropResult? FindCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions) =>
+        FindFaceSquareCrop(imageWidth, imageHeight, predictions);
 
-    public CropResult? FindCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions, Image<Rgb24> image) =>
-        FindFaceSquareCrop(imageWidth, imageHeight, predictions, image, annotateImage: false);
+    public CropResult? FindFaceSquareCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions) {
+        AnnotationCollection annotations = new();
 
-    public CropResult? FindFaceSquareCrop(int imageWidth, int imageHeight, IEnumerable<Prediction> predictions, Image<Rgb24> image, bool annotateImage = false) {
         var allFaces = predictions.Where(p => p.ObjectClass == DetectedObjectClass.Face);
 
         if(!allFaces.Any()) {
@@ -70,17 +71,12 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
                 }
             });
 
+        foreach(var cropTarget in faceCropTargets) {
+            annotations.Add(cropTarget, "face", System.Drawing.Color.HotPink);
+        }
 
-        if(annotateImage) {
-            var facePen = Pens.Dash(Color.HotPink, 2);
-            foreach(var cropTarget in faceCropTargets) {
-                image.Mutate(i => i.Draw(facePen, cropTarget.AsRectangle()));
-            }
-
-            var personPen = Pens.Dash(Color.SeaGreen, 2);
-            foreach(var person in peopleByFace.SelectMany(pair => pair.Value)) {
-                image.Mutate(i => i.Draw(personPen, person.Box.AsRectangle()));
-            }
+        foreach(var person in peopleByFace.SelectMany(pair => pair.Value)) {
+            annotations.Add(person.Box, "person", System.Drawing.Color.SeaGreen);
         }
 
         double score = 1;
@@ -187,20 +183,16 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
         }
 
         var cropBox = new Box(cropLeft, cropTop, cropLeft + cropSize, cropTop + cropSize);
-        if(annotateImage) {
-            image.Mutate(i => i.Draw(Pens.Dot(Color.Azure, 2), cropBox.AsRectangle()));
-        }
+        
         var facesCropOverlap = Box.GetOverlappingPercentage(facesBoundingBox, cropBox);
-
         if(facesCropOverlap < 1) {
             score *= facesCropOverlap * 0.5;
         }
 
         var cropPadding = 0.05f;
         var cropBoxPadded = new Box(cropLeft + (cropSize * cropPadding), cropTop + (cropSize * cropPadding), cropLeft + cropSize * (1 - cropPadding), cropTop + cropSize * (1 - cropPadding));
-        if(annotateImage) {
-            image.Mutate(i => i.Draw(Pens.Dot(Color.Azure, 2), cropBoxPadded.AsRectangle()));
-        }
+        annotations.Add(cropBoxPadded, "crop padding", System.Drawing.Color.AliceBlue);
+        
         var facesCropPaddedOverlap = Box.GetOverlappingPercentage(facesBoundingBox, cropBoxPadded);
         if(facesCropPaddedOverlap < 1) {
             score *= facesCropPaddedOverlap;
@@ -208,7 +200,7 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
 
         score = _applyCropBoosts(predictions, score, new BoxI(cropLeft, cropTop, cropLeft + cropSize, cropTop + cropSize));
 
-        return new CropResult(new Rectangle(cropLeft, cropTop, cropSize, cropSize), score);
+        return new CropResult(new Rectangle(cropLeft, cropTop, cropSize, cropSize), score, annotations.AsEnumerable());
     }
 
     private double _applyCropBoosts(IEnumerable<Prediction> predictions, double score, BoxI cropRegion) {
