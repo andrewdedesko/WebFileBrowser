@@ -92,7 +92,7 @@ public class DirectoryThumbnailer {
 
         while(pathQueue.Any()) {
             var currPath = pathQueue.Dequeue();
-            if(_browseService.IsFile(share, currPath) && _fileTypeService.IsImage(share, currPath)) {
+            if(_browseService.IsFile(share, currPath)) {
                 yield return currPath;
 
             } else if(_browseService.IsDirectory(share, currPath)) {
