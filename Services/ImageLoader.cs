@@ -23,7 +23,6 @@ public class ImageLoader {
 
         if(imageFileHash != null) {
             var imageProvider = () => {
-                _logger.LogInformation("Deferred loading {share}:{path}", share, path);
                 using(FileStream stream = System.IO.File.OpenRead(fsPath)) {
                     return Image.Load<Rgb24>(stream);
                 }
