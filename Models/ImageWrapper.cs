@@ -3,13 +3,20 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace WebFileBrowser.Models;
 
-public class ImageWrapper : IDisposable {
-    public string Share;
-    public string Path;
-    public string FileHash;
-    public Image<Rgb24> Image;
+public interface IImageWrapper : IDisposable {
+    string Share {get;}
+    string Path {get;}
+    string FileHash {get;}
+    Image<Rgb24> Image {get;}
+}
 
-    public ImageWrapper(string share, string path, string fileHash, Image<Rgb24> image) {
+public class LoadedImageWrapper : IImageWrapper {
+    public string Share {get; init;}
+    public string Path { get; init; }
+    public string FileHash { get; init; }
+    public Image<Rgb24> Image { get; init; }
+
+    public LoadedImageWrapper(string share, string path, string fileHash, Image<Rgb24> image) {
         Share = share;
         Path = path;
         FileHash = fileHash;

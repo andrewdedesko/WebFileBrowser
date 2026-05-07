@@ -16,7 +16,7 @@ public class ObjectDetectionService : IObjectDetectionService {
         _logger = logger;
     }
 
-    public IEnumerable<Prediction> GetPredictions(ImageWrapper image) {
+    public IEnumerable<Prediction> GetPredictions(IImageWrapper image) {
         var predictions = _getPredictions(image);
 
         // Scale predictions to image size
@@ -32,7 +32,7 @@ public class ObjectDetectionService : IObjectDetectionService {
         return predictions;
     }
 
-    public IEnumerable<Prediction> _getPredictions(ImageWrapper image) {
+    public IEnumerable<Prediction> _getPredictions(IImageWrapper image) {
         List<Prediction> predictions = new();
         foreach(var objectDetector in _objectDetectors) {
             predictions.AddRange(_getPredictionsWithObjectDetector(objectDetector, image));
@@ -41,7 +41,7 @@ public class ObjectDetectionService : IObjectDetectionService {
         return predictions;
     }
 
-    private IEnumerable<Prediction> _getPredictionsWithObjectDetector(IObjectDetector objectDetector, ImageWrapper image) {
+    private IEnumerable<Prediction> _getPredictionsWithObjectDetector(IObjectDetector objectDetector, IImageWrapper image) {
         var cachedPredictions = _findCachedPredictions(objectDetector, image);
         if(cachedPredictions != null) {
             // _logger.LogInformation("Found cached predictions for detector {objectDetectorIdentifier} for {imageShare}:{imagePath} #{imageHash}: found {predictionCount} predictions",
@@ -63,12 +63,12 @@ public class ObjectDetectionService : IObjectDetectionService {
         return predictions;
     }
 
-    private void _cachePredictions(IObjectDetector objectDetector, ImageWrapper image, IEnumerable<Prediction> predictions) {
+    private void _cachePredictions(IObjectDetector objectDetector, IImageWrapper image, IEnumerable<Prediction> predictions) {
         var json = JsonSerializer.Serialize(new CachedPredictions(){ Predictions = predictions });
         _cache.SetString(_cacheKey(objectDetector, image), json);
     }
 
-    private IEnumerable<Prediction>? _findCachedPredictions(IObjectDetector objectDetector, ImageWrapper image) {
+    private IEnumerable<Prediction>? _findCachedPredictions(IObjectDetector objectDetector, IImageWrapper image) {
         string? result;
 
         // Find cache with new model key
@@ -89,10 +89,10 @@ public class ObjectDetectionService : IObjectDetectionService {
         return null;
     }
 
-    private string _cacheKey(IObjectDetector objectDetector, ImageWrapper imageWrapper) =>
+    private string _cacheKey(IObjectDetector objectDetector, IImageWrapper imageWrapper) =>
         $"ImageObjectDetectionPredictionCache:{objectDetector.GetModelIdentifier()}:{imageWrapper.FileHash}";
 
-    private string _oldCacheKey(IObjectDetector objectDetector, ImageWrapper imageWrapper) =>
+    private string _oldCacheKey(IObjectDetector objectDetector, IImageWrapper imageWrapper) =>
         $"ImageObjectDetectionPredictionCache:{objectDetector.GetOldModelIdentifier()}:{imageWrapper.FileHash}";
 
     private record CachedPredictions {

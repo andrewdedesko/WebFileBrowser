@@ -5,5 +5,5 @@ using WebFileBrowser.Models;
 namespace WebFileBrowser.Services.ObjectDetection;
 
 public interface IObjectDetectionService {
-    IEnumerable<Prediction> GetPredictions(ImageWrapper image);
+    IEnumerable<Prediction> GetPredictions(IImageWrapper image);
 }

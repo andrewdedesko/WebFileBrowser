@@ -17,7 +17,7 @@ public class ImageLoader {
         _logger = logger;
     }
 
-    public ImageWrapper Load(string share, string path) {
+    public IImageWrapper Load(string share, string path) {
         var fsPath = _shareService.GetPath(share, path);
 
         var imageFileData = File.ReadAllBytes(fsPath);
@@ -32,11 +32,11 @@ public class ImageLoader {
 
         using(Stream stream = new MemoryStream(imageFileData)) {
             var image = Image.Load<Rgb24>(stream);
-            return new ImageWrapper(share, path, imageFileHash, image);
+            return new LoadedImageWrapper(share, path, imageFileHash, image);
         }
     }
 
-    public async Task<ImageWrapper> LoadAsync(string share, string path) {
+    public async Task<IImageWrapper> LoadAsync(string share, string path) {
         throw new NotImplementedException();
     }
 

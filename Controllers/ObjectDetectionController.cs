@@ -24,7 +24,7 @@ public class ObjectDetectionController : Controller {
 
     public IActionResult Detect(string share, string path) {
         var faceDetector = new SharpAiFaceDetector();
-        using(ImageWrapper sourceImage = _imageLoader.Load(share, path)) {
+        using(IImageWrapper sourceImage = _imageLoader.Load(share, path)) {
             sourceImage.Image.ResizeImageToMaxDimension(1024);
 
             var predictions = _objectDetectionService.GetPredictions(sourceImage);
