@@ -90,7 +90,7 @@ public class ImageThumbnailService : IImageThumbnailService {
                     ThumbnailMetadata? cachedThumbnailMetadata = null;
                     var cachedThumbnailMetadataStr = await _cache.GetStringAsync(thumbnailMetadataCacheKey);
                     if(!string.IsNullOrEmpty(cachedThumbnailMetadataStr)) {
-                        _logger.LogInformation("{metadata}", cachedThumbnailMetadataStr);
+                        // _logger.LogInformation("{metadata}", cachedThumbnailMetadataStr);
                         try{
                             cachedThumbnailMetadata = JsonSerializer.Deserialize<ThumbnailMetadata>(cachedThumbnailMetadataStr);
                         } catch(Exception) {
@@ -98,7 +98,7 @@ public class ImageThumbnailService : IImageThumbnailService {
                     }
 
                     if(cachedThumbnailMetadata != null && _thumbnailMetadataAreEqual(cachedThumbnailMetadata, bestThumbnailMetadata)) {
-                        _logger.LogInformation("Thumbnail {share}:{path} is already up to date", share, path);
+                        // _logger.LogInformation("Thumbnail {share}:{path} is already up to date", share, path);
                         data = cachedThumbnail;
 
                         cachedThumbnailMetadata.ExpiresAt = absoluteExpiration;
