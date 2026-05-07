@@ -53,8 +53,8 @@ public class DirectoryThumbnailer {
         return null;
     }
 
-    public IEnumerable<Tuple<string, CropResult>> FindBestThumbnailImage(string share, string path) {
-        List<Tuple<string, CropResult>> thumbnailOptions = new();
+    public IEnumerable<Tuple<string, string, CropResult>> FindBestThumbnailImage(string share, string path) {
+        List<Tuple<string, string, CropResult>> thumbnailOptions = new();
         int attempts = 0;
         foreach(var currentPath in FindThumbnailImages(share, path)) {
             if(!_fileTypeService.IsImage(share, currentPath)) {
@@ -67,7 +67,7 @@ public class DirectoryThumbnailer {
                 var predictions = _objectDetectionService.GetPredictions(imageWrapper);
                 CropResult? cropResult = _autoCropper.FindCrop(image.Width, image.Height, predictions);
                 if(cropResult != null) {
-                    thumbnailOptions.Add(new Tuple<string, CropResult>(currentPath, cropResult));
+                    thumbnailOptions.Add(new Tuple<string, string, CropResult>(currentPath, imageWrapper.FileHash, cropResult));
 
                     if(thumbnailOptions.Count() >= 6) {
                         break;

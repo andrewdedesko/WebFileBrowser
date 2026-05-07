@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Distributed;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -36,41 +38,79 @@ public class ImageThumbnailService : IImageThumbnailService {
     }
 
     public async Task<byte[]> GetImageThumbnail(string share, string path, int size, bool useCache = true, bool refreshCache = false, bool fast = true) {
+        byte[]? cachedThumbnail = await FindCachedThumbnailAsync(share, path, size);
         if(useCache && !refreshCache) {
-            byte[]? cachedThumbnail = await FindCachedThumbnailAsync(share, path, size);
             if(cachedThumbnail != null) {
                 return cachedThumbnail;
             }
         }
 
-        DistributedCacheEntryOptions cacheEntryOptions = new();
-        var absoluteExpiration = TimeSpan.FromDays(Random.Shared.Next(20, 25));
+        var absoluteExpiration = DateTime.Now + TimeSpan.FromDays(45);
+        var freshnessExpiration = TimeSpan.FromDays(30);
         var filePath = _shareService.GetPath(share, path);
         byte[]? data = null;
+
         if(Directory.Exists(filePath)) {
             if(fast) {
                 var thumbnailImage = _directoryThumbnailer.FindThumbnail(share, path);
                 if(thumbnailImage != null) {
-                    cacheEntryOptions.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                    await _backgroundThumbnailQueue.EnqueueAsync(new ThumbnailTask() {
-                        Share = share,
-                        Path = path
-                    });
-
                     _imageThumbnailer.ScaleImageToThumbnail(thumbnailImage, size);
                     data = _imageThumbnailer.GetImageAsBytes(thumbnailImage);
                 }
 
+                await _backgroundThumbnailQueue.EnqueueAsync(new ThumbnailTask() {
+                    Share = share,
+                    Path = path
+                });
+
             } else {
-                IEnumerable<Tuple<string, CropResult>> thumbnailOptions = _directoryThumbnailer.FindBestThumbnailImage(share, path);
+                IEnumerable<Tuple<string, string, CropResult>> thumbnailOptions = _directoryThumbnailer.FindBestThumbnailImage(share, path);
 
                 if(thumbnailOptions.Any()) {
-                    var bestThumbnailOption = thumbnailOptions.OrderByDescending(o => o.Item2.Score).First();
+                    var bestThumbnailOption = thumbnailOptions.OrderByDescending(o => o.Item3.Score).First();
                     var bestThumbnailPath = bestThumbnailOption.Item1;
-                    using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, bestThumbnailPath))) {
-                        image.Mutate(i => i.Crop(bestThumbnailOption.Item2.Box));
-                        _imageThumbnailer.ScaleImageToThumbnail(image, size);
-                        data = _imageThumbnailer.GetImageAsBytes(image);
+                    var bestThumbnailHash = bestThumbnailOption.Item2;
+                    var bestThumbnailCropResult = bestThumbnailOption.Item3;
+
+                    var bestThumbnailMetadata = new ThumbnailMetadata() {
+                        ImagePath = bestThumbnailPath,
+                        ImageFileHash = bestThumbnailHash,
+                        ExpiresAt = absoluteExpiration,
+                        Crop = new ThumbnailCropMetadata() {
+                            CropScore = bestThumbnailCropResult.Score,
+                            CropRectangleLeft = bestThumbnailCropResult.Box.Left,
+                            CropRectangleTop = bestThumbnailCropResult.Box.Top,
+                            CropRectangleRight = bestThumbnailCropResult.Box.Right,
+                            CropRectangleBottom = bestThumbnailCropResult.Box.Bottom
+                        }
+                    };
+
+                    var thumbnailMetadataCacheKey = $"Thumbnail:Metadata:{_thumbnailImageMimeType}:{_shareService.GetPath(share, path)}";
+
+                    ThumbnailMetadata? cachedThumbnailMetadata = null;
+                    var cachedThumbnailMetadataStr = await _cache.GetStringAsync(thumbnailMetadataCacheKey);
+                    if(!string.IsNullOrEmpty(cachedThumbnailMetadataStr)) {
+                        _logger.LogInformation("{metadata}", cachedThumbnailMetadataStr);
+                        try{
+                            cachedThumbnailMetadata = JsonSerializer.Deserialize<ThumbnailMetadata>(cachedThumbnailMetadataStr);
+                        } catch(Exception) {
+                        }
+                    }
+
+                    if(cachedThumbnailMetadata != null && _thumbnailMetadataAreEqual(cachedThumbnailMetadata, bestThumbnailMetadata)) {
+                        _logger.LogInformation("Thumbnail {share}:{path} is already up to date", share, path);
+                        data = cachedThumbnail;
+
+                        cachedThumbnailMetadata.ExpiresAt = absoluteExpiration;
+                        await _cache.SetStringAsync(thumbnailMetadataCacheKey, JsonSerializer.Serialize(cachedThumbnailMetadata));
+                    } else{
+                        using(var image = Image.Load<Rgb24>(_shareService.GetPath(share, bestThumbnailPath))) {
+                            image.Mutate(i => i.Crop(bestThumbnailCropResult.Box));
+                            _imageThumbnailer.ScaleImageToThumbnail(image, size);
+                            data = _imageThumbnailer.GetImageAsBytes(image);
+                        }
+
+                        await _cache.SetStringAsync(thumbnailMetadataCacheKey, JsonSerializer.Serialize(bestThumbnailMetadata));
                     }
                 }
             }
@@ -91,7 +131,7 @@ public class ImageThumbnailService : IImageThumbnailService {
         }
 
         if(useCache || refreshCache) {
-            await SetThumbnailCacheAsync(share, path, size, data, absoluteExpiration);
+            await _cacheThumbnailAsync(share, path, size, data, absoluteExpiration);
         }
 
         return data;
@@ -135,10 +175,10 @@ public class ImageThumbnailService : IImageThumbnailService {
     public string GetThumbnailImageMimeType() =>
         _thumbnailImageMimeType;
 
-    private async Task SetThumbnailCacheAsync(string share, string path, int size, byte[] thumbnailData, TimeSpan absoluteExpiry) {
+    private async Task _cacheThumbnailAsync(string share, string path, int size, byte[] thumbnailData, DateTime absoluteExpiration) {
         if(_allowedThumbnailCacheSizes.Contains(size)) {
             DistributedCacheEntryOptions cacheEntryOptions = new();
-            cacheEntryOptions.SetAbsoluteExpiration(absoluteExpiry);
+            cacheEntryOptions.SetAbsoluteExpiration(absoluteExpiration);
             await _cache.SetAsync(_thumbnailCacheKey(_shareService.GetPath(share, path), size), thumbnailData, cacheEntryOptions);
         }
     }
@@ -187,7 +227,82 @@ public class ImageThumbnailService : IImageThumbnailService {
         return $"Thumbnail:Image:{_thumbnailImageMimeType}:{size}:{path}";
     }
 
+    private string _thumbnailFreshnessCacheKey(string path) {
+        return $"Thumbnail:Freshness:{_thumbnailImageMimeType}:{path}";
+    }
+
     private string _oldThumbnail240PxCacheKey(string share, string path) {
         return $"Thumbnail:Image:{_thumbnailImageMimeType}:{_shareService.GetPath(share, path)}";
+    }
+
+    private static bool _thumbnailMetadataAreEqual(ThumbnailMetadata a, ThumbnailMetadata b) {
+        if(a == null || b == null) {
+            return false;
+        }
+
+        if(a.ImagePath != b.ImagePath) {
+            return false;
+        }
+
+        if(a.ImageFileHash != b.ImageFileHash) {
+            return false;
+        }
+
+        if(a.Crop == null && b.Crop == null) {
+            return true;
+        }
+
+        if(a.Crop == null || b.Crop == null) {
+            return false;
+        }
+
+        if(a.Crop.CropRectangleLeft != b.Crop.CropRectangleLeft) {
+            return false;
+        }
+
+        if(a.Crop.CropRectangleTop != b.Crop.CropRectangleTop) {
+            return false;
+        }
+
+        if(a.Crop.CropRectangleRight != b.Crop.CropRectangleRight) {
+            return false;
+        }
+
+        if(a.Crop.CropRectangleBottom != b.Crop.CropRectangleBottom) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private class ThumbnailMetadata {
+        [JsonPropertyName("imagePath")]
+        public required string ImagePath {get; set;}
+
+        [JsonPropertyName("imageFileHash")]
+        public required string ImageFileHash {get; set;}
+
+        [JsonPropertyName("crop")]
+        public ThumbnailCropMetadata? Crop { get; set; }
+
+        [JsonPropertyName("expiresAt")]
+        public required DateTime ExpiresAt {get; set;}
+    }
+
+    private class ThumbnailCropMetadata {
+        [JsonPropertyName("rectangleLeft")]
+        public int CropRectangleLeft { get; set; }
+
+        [JsonPropertyName("rectangleTop")]
+        public int CropRectangleTop { get; set; }
+
+        [JsonPropertyName("rectangleRight")]
+        public int CropRectangleRight { get; set; }
+
+        [JsonPropertyName("rectangleBottom")]
+        public int CropRectangleBottom { get; set; }
+
+        [JsonPropertyName("score")]
+        public double? CropScore { get; set; }
     }
 }
