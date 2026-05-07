@@ -19,9 +19,27 @@ public class ImageLoader {
 
     public IImageWrapper Load(string share, string path) {
         var fsPath = _shareService.GetPath(share, path);
+        string? imageFileHash = _getCachedFileHash(share, path);
+
+        if(imageFileHash != null) {
+            var imageProvider = () => {
+                _logger.LogInformation("Deferred loading {share}:{path}", share, path);
+                using(FileStream stream = System.IO.File.OpenRead(fsPath)) {
+                    return Image.Load<Rgb24>(stream);
+                }
+            };
+
+            var imageInfoProvider = () => {
+                using(FileStream stream = System.IO.File.OpenRead(fsPath)) {
+                    return Image.Identify(stream);
+                }
+            };
+
+            return new DeferredImageWrapper(share, path, imageFileHash, imageProvider, imageInfoProvider);
+        }
 
         var imageFileData = File.ReadAllBytes(fsPath);
-        string? imageFileHash = _getCachedFileHash(share, path);
+        
         if(imageFileHash == null) {
             imageFileHash = Convert.ToHexStringLower(SHA1.HashData(imageFileData));
             _cacheFileHash(share, path, imageFileHash);

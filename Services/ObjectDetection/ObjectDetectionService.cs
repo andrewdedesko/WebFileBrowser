@@ -22,10 +22,10 @@ public class ObjectDetectionService : IObjectDetectionService {
         // Scale predictions to image size
         foreach(var prediction in predictions) {
             prediction.Box = new Box(
-                prediction.Box.Left * image.Image.Width,
-                prediction.Box.Top * image.Image.Height,
-                prediction.Box.Right * image.Image.Width,
-                prediction.Box.Bottom * image.Image.Height
+                prediction.Box.Left * image.Width,
+                prediction.Box.Top * image.Height,
+                prediction.Box.Right * image.Width,
+                prediction.Box.Bottom * image.Height
             );
         }
 
