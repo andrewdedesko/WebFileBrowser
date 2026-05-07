@@ -93,6 +93,11 @@ public class FaceSquareAutoCropper(IEnumerable<CropBoost> _cropBoosts, ILogger<F
         if(allPeople.Any()) {
             foreach(var face in faces) {
                 var areaPercentageOfImage = face.Box.Area * 100 / (float)(imageWidth * imageHeight);
+
+                // TODO fix this so a face without people isn't skipped
+                if(!peopleByFace.ContainsKey(face) || !peopleByFace[face].Any()) {
+                    continue;
+                }
                 var areaPercentageOfPeople = face.Box.Area * 100 / Prediction.GetBoundingBox(peopleByFace[face]).Area;
                 annotations.Add(face.Box, $"face (p: {areaPercentageOfPeople:0.}% i: {areaPercentageOfImage:0.}%)", System.Drawing.Color.HotPink);
 
