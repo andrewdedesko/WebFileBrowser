@@ -22,7 +22,7 @@ builder.Services.AddSingleton<IFileTypeService, FileTypeService>();
 builder.Services.AddSingleton<ImageLoader>();
 builder.Services.AddSingleton<IObjectDetectionService, ObjectDetectionService>();
 builder.Services.AddSingleton<BackgroundThumbnailQueue>(ctx => {
-    return new BackgroundThumbnailQueue(1000);
+    return new BackgroundThumbnailQueue(10000);
 });
 builder.Services.AddSingleton<ImageThumbnailer>();
 builder.Services.AddSingleton<VideoThumbnailer>();
