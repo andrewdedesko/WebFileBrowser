@@ -120,7 +120,6 @@ public class ImageThumbnailService : IImageThumbnailService {
 
         } else if(_fileTypeService.IsImage(filePath)) {
             data = _imageThumbnailer.GetImageFileThumbnailImage(share, path, size);
-            cacheEntryOptions.SetSlidingExpiration(TimeSpan.FromDays(1));
 
         } else if(_fileTypeService.IsVideo(filePath)) {
             data = _videoThumbnailer.GetVideoThumbnail(filePath, size);

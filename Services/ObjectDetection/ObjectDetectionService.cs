@@ -82,7 +82,7 @@ public class ObjectDetectionService : IObjectDetectionService {
         if(result != null) {
             _cache.SetString(_cacheKey(objectDetector, image), result);
             _cache.Remove(_oldCacheKey(objectDetector, image));
-            _logger.LogInformation("Migrated prediction cache from {oldKey} to {newKey}", _oldCacheKey(objectDetector, image), _cacheKey(objectDetector, image));
+            // _logger.LogInformation("Migrated prediction cache from {oldKey} to {newKey}", _oldCacheKey(objectDetector, image), _cacheKey(objectDetector, image));
             return JsonSerializer.Deserialize<CachedPredictions>(result)?.Predictions;
         }
 
